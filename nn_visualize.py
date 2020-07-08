@@ -2,18 +2,19 @@
 
 import graphviz as gv
 
-class ann_visualize():
-    def __init__(self):
-        self.network = gv.Digraph("NN", directory='./graphs', format='png',
-              graph_attr=dict(ranksep='2', rankdir='LR', color='black', splines='line'),
+class visualizer():
+    def __init__(self, title="My-Neural-Network"):
+        self.title = title
+        self.network = gv.Graph(title, directory='./graphs', format='png',
+              graph_attr=dict(ranksep='2', rankdir='LR', color='white', splines='line'),
               node_attr=dict(label='', shape='circle', width='0.5'))
-        
+
         self.layers = 0
         self.layer_names = list()
         self.layer_units = list()
 
     def __str__(self):
-        return "NN Visualizer"
+        return self.title
 
     def add_layer(self, layer_name, nodes):
         with self.network.subgraph(name=f'cluster_{layer_name}') as layer:
@@ -45,44 +46,15 @@ class ann_visualize():
         self._build_network()
         self.network.view()
 
-def add_layer(network, layer_name, nodes):
-    with network.subgraph(name=f'layer_{layer_name}') as layer:
-        if nodes > 10:
-            layer.attr(labeljust='right', labelloc='bottom', label='+'+str(nodes - 10))
-            nodes = 10
-        layer.attr(body=layer_name)
+if __name__ == '__main__':
+    input_nodes = 6
+    hidden_nodes = 12
+    output_nodes = 4
 
-        for i in range(nodes):
-            layer.node(f'{layer_name}_{i}', style='filled', fillcolor='yellow')
+    net = visualizer()
 
-    return network
+    net.add_layer('input', input_nodes)
+    net.add_layer('hidden', hidden_nodes)
+    net.add_layer('output', output_nodes)
 
-# network = gv.Digraph("NN", directory='graphs', format='png',
-            #   graph_attr=dict(ranksep='2', rankdir='LR', color='black', splines='line'),
-            #   node_attr=dict(label='', shape='circle', width='0.5'))
-# 
-input_nodes = 6
-hidden_nodes = 9
-output_nodes = 4
-# 
-# add_layer(network, 'input', input_nodes)
-# add_layer(network, 'hidden', hidden_nodes)
-# add_layer(network, 'output', output_nodes)
-# 
-# for i in range(input_nodes):
-    # for h in range(hidden_nodes):
-        # network.edge(f'input_{i}', f'hidden_{h}')
-# 
-# for h in range(hidden_nodes):
-    # for o in range(output_nodes):
-        # network.edge(f'hidden_{h}', f'output_{o}')
-# 
-# network.view()
-
-net = ann_visualize()
-
-net.add_layer('input', input_nodes)
-net.add_layer('hidden', hidden_nodes)
-net.add_layer('output', output_nodes)
-
-net.visualize()
+    net.visualize()
