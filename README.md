@@ -6,14 +6,29 @@ A module which creates a neural network with the given architecture(only Dense l
 
 ## Installation
 
-Run the below command to install the package in linux
+### Before installation
+
+Before installing the module, run the below command at your prompt to install the graphviz
 ```shell
 $ sudo apt install graphviz
 ```
 
-Run the below command to install the python wrapper of the Graphviz
+### Normal installation
 ```shell
-$ sudo pip3 install graphviz
+$ sudo pip3 install neuralnet-visualize
+```
+
+### Development installation
+```shell
+$ git clone https://github.com/AnuragAnalog/nn_visualize.git
+$ cd nn_visualize
+```
+
+### After installation
+
+After installing the module, if you want to upgrade the module, run the below command.
+```shell
+sudo pip3 install neuralnet-visualize --upgrade
 ```
 
 ## How it looks?
