@@ -1,13 +1,26 @@
 #!/usr/bin/python3
 
+import sys
 import graphviz as gv
 
 class visualizer():
-    def __init__(self, title="My-Neural-Network"):
+    def __init__(self, title="My-Neural-Network", file_type='png', savepdf=False, orientation='LR'):
         self.title = title
         self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red'}
-        self.network = gv.Graph(title, directory='./graphs', format='jpeg',
-              graph_attr=dict(ranksep='2', rankdir='LR', color='white', splines='line'),
+
+        if savepdf:
+            self.file_type = 'pdf'
+        else:
+            self.file_type = file_type
+
+        if orientation in ['LR', 'TB', 'BT', 'RL']:
+            self.orient = orientation
+        else:
+            print('Invalid orientation')
+            sys.exit()
+
+        self.network = gv.Graph(title, directory='./graphs', format=self.file_type,
+              graph_attr=dict(ranksep='2', rankdir=self.orient, color='white', splines='line'),
               node_attr=dict(label='', shape='circle', width='0.5'))
 
         self.layers = 0
@@ -39,7 +52,7 @@ class visualizer():
                     color = self.color_encoding['input']
                 else:
                     color = self.color_encoding['hidden']
-                layer.node(f'{layer_name}_{i}', style='filled', fillcolor=color)
+                layer.node(f'{layer_name}_{i}', shape='point', style='filled', fillcolor=color)
 
         return
 
@@ -84,7 +97,8 @@ class visualizer():
         if self.layers < 2:
             print("Cannot draw Neural Network")
             print("Add atleast two layers to the network")
-            exit()
+            sys.exit()
+
         self._build_network()
         self.network.view()
 
