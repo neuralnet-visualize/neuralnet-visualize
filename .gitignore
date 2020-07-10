@@ -1,2 +1,4 @@
 ./graphs/*
 ./__pycache__/*
+./build/
+./dist/
