@@ -8,7 +8,7 @@ with open('HISTORY.md') as history_file:
 
 setup_args = dict(
     name='neuralnet_visualize',
-    version='0.0.2',
+    version='0.0.3',
     description='Generate a neural network architecture Image',
     long_description_content_type='text/markdown',
     long_description=DESCRIPTION+"\n\n\n"+HISTORY,

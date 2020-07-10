@@ -1,5 +1,5 @@
-from . import nn_visualize
+from . import neuralnet_visualize
 
 __all__ = [
-    'nn_visualize'
+    'neuralnet_visualize'
 ]

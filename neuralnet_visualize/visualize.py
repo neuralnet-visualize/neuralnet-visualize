@@ -78,18 +78,28 @@ class visualizer():
 
             self._connect_layers(nodes1, nodes2, self.layer_names[i], self.layer_names[i+1])
 
+        # Updating the color of output dense layer to red
+        with self.network.subgraph(name=f'cluster_{self.layer_names[-1]}') as layer:
+            for i in range(self.layer_units[-1]):
+                layer.node(f'{self.layer_names[-1]}_{i}', style='filled', fillcolor='red')
+
         return
 
     def summarize(self):
         title = "Neural Network Architecture"
-        print("+---------------------------------------------------------------------+")
+        hline = "+"+"-"*69+"+"
+
+        print(hline)
         print("|"+title.center(69)+"|")
-        print("+---------------------------------------------------------------------+")
-        print("|\tLayer Name\t|\tLayer Type\t|\tLayer Units\t|")
-        print("+---------------------------------------------------------------------+")
+        print(hline)
+        print("|"+"Layer Name".center(28)+"|"+"Layer Type".center(24)+"|"+"Layer Units".center(15)+"|")
+        print(hline)
         for i in range(self.layers):
-            print("|\t"+self.layer_names[i]+"\t|\t"+self.layer_types[i].capitalize()+"\t\t|\t"+str(self.layer_units[i])+"\t\t|")
-            print("+---------------------------------------------------------------------+")
+            col1 = self.layer_names[i].center(28)
+            col2 = self.layer_types[i].capitalize().center(24)
+            col3 = str(self.layer_units[i]).center(15)
+            print("|"+col1+"|"+col2+"|"+col3+"|")
+            print(hline)
 
         return
 
@@ -98,16 +108,15 @@ class visualizer():
             print("Cannot draw Neural Network")
             print("Add atleast two layers to the network")
             sys.exit()
-
         self._build_network()
         self.network.view()
 
         return
 
 if __name__ == '__main__':
-    input_nodes = 14
-    hidden_nodes = 5
-    output_nodes = 4
+    input_nodes = 7
+    hidden_nodes = 12
+    output_nodes = 6
 
     net = visualizer()
 

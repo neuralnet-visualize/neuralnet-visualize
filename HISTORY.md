@@ -1,5 +1,10 @@
 # Neural Network Visualizer Version History
 
+## 0.0.4
+
+* Refactored summarize function
+* Added a code part which colors output layer to red
+
 ## 0.0.3
 
 * Added more display orientations

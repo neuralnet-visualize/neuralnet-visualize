@@ -39,3 +39,5 @@ sudo pip3 install neuralnet-visualize --upgrade
 * Add Convolutional layers, Maxpooling, Flatten layers, LSTM's
 * Specific colors for activation functions
 * Specific colors for types of layers
+* Directly convert from tensorflow models
+* Directly convert from pytorch models
