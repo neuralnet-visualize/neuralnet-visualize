@@ -1,4 +1,4 @@
-./graphs/*
-./__pycache__/*
-./build/
-./dist/
+dev/
+dist/
+build/
+*.egg-info/
