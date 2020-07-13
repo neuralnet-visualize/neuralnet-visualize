@@ -4,6 +4,7 @@
 
 * Refactored summarize function
 * Added a code part which colors output layer to red
+* Added from_tensorflow method
 
 ## 0.0.3
 

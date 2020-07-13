@@ -2,6 +2,7 @@
 
 import sys
 import graphviz as gv
+import tensorflow as tf
 
 class visualizer():
     def __init__(self, title="My-Neural-Network", file_type='png', savepdf=False, orientation='LR'):
@@ -27,6 +28,7 @@ class visualizer():
         self.layer_names = list()
         self.layer_types = list()
         self.layer_units = list()
+        self.tmp_units = list()
 
     def __str__(self):
         return self.title
@@ -46,6 +48,7 @@ class visualizer():
             if nodes > 10:
                 layer.attr(labeljust='right', labelloc='bottom', label='+'+str(nodes - 10))
                 nodes = 10
+            self.tmp_units.append(nodes)
 
             for i in range(nodes):
                 if self.layers == 1:
@@ -80,10 +83,26 @@ class visualizer():
 
         # Updating the color of output dense layer to red
         with self.network.subgraph(name=f'cluster_{self.layer_names[-1]}') as layer:
-            for i in range(self.layer_units[-1]):
+            for i in range(self.tmp_units[-1]):
                 layer.node(f'{self.layer_names[-1]}_{i}', style='filled', fillcolor='red')
 
         return
+
+    def from_tensorflow(self, model):
+        for layer in model.layers:
+            if type(layer) == tf.keras.layers.Dense:
+                self.add_layer('dense', layer.units)
+
+        return
+
+    def get_meta_data(self):
+        meta_data = dict()
+        meta_data['Number of Layers'] = self.layers
+        meta_data['Layer names'] = self.layer_names
+        meta_data['Layer Types'] = self.layer_types
+        meta_data['Node in Layers'] = self.layer_units
+
+        return meta_data
 
     def summarize(self):
         title = "Neural Network Architecture"
@@ -120,9 +139,18 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    net.add_layer('dense', input_nodes)
-    net.add_layer('dense', hidden_nodes)
-    net.add_layer('dense', output_nodes)
+    # net.add_layer('dense', input_nodes)
+    # net.add_layer('dense', hidden_nodes)
+    # net.add_layer('dense', output_nodes)
 
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Dense(128, activation='sigmoid'),
+        tf.keras.layers.Dense(64, activation='sigmoid'),
+        tf.keras.layers.Dense(32, activation='sigmoid'),
+        tf.keras.layers.Dense(16, activation='sigmoid'),
+        tf.keras.layers.Conv2D(16, 3)
+    ])
+
+    net.from_tensorflow(model)
     net.visualize()
     net.summarize()
