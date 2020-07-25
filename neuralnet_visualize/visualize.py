@@ -5,6 +5,10 @@ import graphviz as gv
 import tensorflow as tf
 
 class visualizer():
+    """
+    Neural Network visualizer class
+    """
+
     def __init__(self, title="My-Neural-Network", file_type='png', savepdf=False, orientation='LR'):
         self.title = title
         self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red'}
@@ -34,6 +38,17 @@ class visualizer():
         return self.title
 
     def add_layer(self, layer_type, nodes):
+        """
+        Adds a layer to the network
+
+        Parameters
+        ----------
+        layer_type : str
+            Type of layer to add to the network
+        nodes : int
+            Number of units in the layer
+        """
+
         if self.layers == 0:
             layer_name = layer_type.capitalize()+'_input'
         else:
@@ -60,6 +75,8 @@ class visualizer():
         return
 
     def _connect_layers(self, l1_nodes, l2_nodes, l1_name, l2_name):
+        # Connect all the nodes between the two layers
+
         for l1 in range(l1_nodes):
             for l2 in range(l2_nodes):
                 n1 = l1_name+'_'+str(l1)
@@ -70,6 +87,8 @@ class visualizer():
         return
 
     def _build_network(self):
+        # Connect all the adjacent layers in the network
+
         for i in range(self.layers - 1):
             nodes1 = self.layer_units[i]
             nodes2 = self.layer_units[i+1]
@@ -89,6 +108,15 @@ class visualizer():
         return
 
     def from_tensorflow(self, model):
+        """
+        Converts a given tensorflow model into graph
+
+        Parameters
+        ----------
+        model : tensorflow.python.keras.engine.sequential.Sequential
+            A tensorflow model
+        """
+
         for layer in model.layers:
             if type(layer) == tf.keras.layers.Dense:
                 self.add_layer('dense', layer.units)
@@ -96,6 +124,15 @@ class visualizer():
         return
 
     def get_meta_data(self):
+        """
+        Give a dictionary which contains meta data of the network.
+
+        Returns
+        -------
+        meta_data : dict
+            meta data which contains the details of all the layerss
+        """
+
         meta_data = dict()
         meta_data['Number of Layers'] = self.layers
         meta_data['Layer names'] = self.layer_names
@@ -105,6 +142,10 @@ class visualizer():
         return meta_data
 
     def summarize(self):
+        """
+        Prints a summary of the network in MySQL tabular format
+        """
+
         title = "Neural Network Architecture"
         hline = "+"+"-"*69+"+"
 
@@ -123,10 +164,15 @@ class visualizer():
         return
 
     def visualize(self):
+        """
+        Visualize the network
+        """
+
         if self.layers < 2:
             print("Cannot draw Neural Network")
             print("Add atleast two layers to the network")
             sys.exit()
+
         self._build_network()
         self.network.view()
 
