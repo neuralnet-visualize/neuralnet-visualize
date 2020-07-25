@@ -1,6 +1,4 @@
 
-from . import neuralnet_visualize
-
 """
 Neural Network Visualizer
 =========================

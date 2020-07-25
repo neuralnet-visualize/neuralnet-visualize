@@ -4,6 +4,8 @@ import sys
 import graphviz as gv
 import tensorflow as tf
 
+from .exceptions import *
+
 class visualizer():
     """
     Neural Network visualizer class
@@ -12,21 +14,23 @@ class visualizer():
     def __init__(self, title="My-Neural-Network", file_type='png', savepdf=False, orientation='LR'):
         self.title = title
         self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red'}
+        self.possible_filetypes = ['png', 'jpeg', 'jpg', 'svg', 'gif']
+        self.possible_orientations = ['LR', 'TB', 'BT', 'RL']
 
         if savepdf:
             self.file_type = 'pdf'
         else:
+            if file_type not in self.possible_filetypes:
+                raise NotAValidOption(file_type, self.possible_filetypes)
             self.file_type = file_type
 
-        if orientation in ['LR', 'TB', 'BT', 'RL']:
-            self.orient = orientation
-        else:
-            print('Invalid orientation')
-            sys.exit()
+        if orientation not in self.possible_orientations:
+            raise NotAValidOption(orientation, self.possible_orientations)
+        self.orient = orientation
 
         self.network = gv.Graph(title, directory='./graphs', format=self.file_type,
               graph_attr=dict(ranksep='2', rankdir=self.orient, color='white', splines='line'),
-              node_attr=dict(label='', shape='circle', width='0.5'))
+              node_attr=dict(label='', nodesep='4', shape='circle', width='0.5'))
 
         self.layers = 0
         self.layer_names = list()
@@ -181,12 +185,13 @@ class visualizer():
 if __name__ == '__main__':
     input_nodes = 7
     hidden_nodes = 12
-    output_nodes = 6
+    output_nodes = 4
 
     net = visualizer()
 
     # net.add_layer('dense', input_nodes)
     # net.add_layer('dense', hidden_nodes)
+    # net.add_layer('dense', hidden_nodes-5)
     # net.add_layer('dense', output_nodes)
 
     model = tf.keras.models.Sequential([
