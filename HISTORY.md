@@ -1,5 +1,10 @@
 # Neural Network Visualizer Version History
 
+### 0.1.1
+
+* Added some possible exceptions
+* Restructred basic functions in while initial import
+
 ## 0.1.0
 
 * Added documentation
