@@ -42,7 +42,7 @@ class visualizer():
     def __str__(self):
         return self.title
 
-    def add_layer(self, layer_type, nodes=10, kernal_size=3):
+    def add_layer(self, layer_type, nodes=10, kernel_size=3):
         """
         Adds a layer to the network
 
@@ -52,7 +52,7 @@ class visualizer():
             Type of layer to add to the network (case-insensitive)
         nodes : int, default
             Number of units in the layer
-        kernal_size : int, default
+        kernel_size : int, default
             Size of the 2D Convolution window, only if layer_type == 'conv2d'
         """
 
@@ -95,7 +95,7 @@ class visualizer():
         elif self.layer_types[-1] == 'conv2d':
             with self.network.subgraph(node_attr=dict(shape='box')) as layer:
                 color = self.color_encoding['conv2d']
-                layer.node(name=self.layer_names[-1], label=f"Kernal Size: {kernal_size}", height='1.5', width='1.5', style='filled', fillcolor=color)
+                layer.node(name=self.layer_names[-1], label=f"Kernel Size: {kernel_size}", height='1.5', width='1.5', style='filled', fillcolor=color)
 
         return
 
@@ -155,7 +155,9 @@ class visualizer():
 
         for layer in model.layers:
             if type(layer) == tf.keras.layers.Dense:
-                self.add_layer('dense', layer.units)
+                self.add_layer('dense', nodes=layer.units)
+            elif type(layer) == tf.keras.layers.Conv2D:
+                self.add_layer('conv2d', kernal_size=layer.kernel_size)
 
         return
 
@@ -221,18 +223,18 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    net.add_layer('conv2d', kernal_size=5)
-    net.add_layer('dense', hidden_nodes)
-    net.add_layer('dense', output_nodes)
+    # net.add_layer('conv2d', kernal_size=5)
+    # net.add_layer('dense', hidden_nodes)
+    # net.add_layer('dense', output_nodes)
 
     model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
         tf.keras.layers.Dense(128, activation='sigmoid'),
         tf.keras.layers.Dense(64, activation='sigmoid'),
         tf.keras.layers.Dense(32, activation='sigmoid'),
-        tf.keras.layers.Dense(16, activation='sigmoid'),
-        tf.keras.layers.Conv2D(16, 3)
+        tf.keras.layers.Dense(16, activation='sigmoid')
     ])
 
-    # net.from_tensorflow(model)
+    net.from_tensorflow(model)
     net.visualize()
     net.summarize()
