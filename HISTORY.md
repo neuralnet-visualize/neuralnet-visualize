@@ -1,5 +1,10 @@
 # Neural Network Visualizer Version History
 
+### 0.1.2
+
+* Added Conv layer, with kernal size parameter
+* Refactored add_layer function
+
 ### 0.1.1
 
 * Added some possible exceptions

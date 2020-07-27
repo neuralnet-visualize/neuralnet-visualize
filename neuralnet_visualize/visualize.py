@@ -13,7 +13,8 @@ class visualizer():
 
     def __init__(self, title="My-Neural-Network", file_type='png', savepdf=False, orientation='LR'):
         self.title = title
-        self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red'}
+        self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red', 'conv2d': 'pink'}
+        self.possible_layers = ['dense', 'conv2d']
         self.possible_filetypes = ['png', 'jpeg', 'jpg', 'svg', 'gif']
         self.possible_orientations = ['LR', 'TB', 'BT', 'RL']
 
@@ -41,50 +42,80 @@ class visualizer():
     def __str__(self):
         return self.title
 
-    def add_layer(self, layer_type, nodes):
+    def add_layer(self, layer_type, nodes=10, kernal_size=3):
         """
         Adds a layer to the network
 
         Parameters
         ----------
         layer_type : str
-            Type of layer to add to the network
-        nodes : int
+            Type of layer to add to the network (case-insensitive)
+        nodes : int, default
             Number of units in the layer
+        kernal_size : int, default
+            Size of the 2D Convolution window, only if layer_type == 'conv2d'
         """
 
-        if self.layers == 0:
-            layer_name = layer_type.capitalize()+'_input'
-        else:
-            layer_name = layer_type.capitalize()+'_hidden'+str(self.layers)
+        if layer_type not in self.possible_layers:
+            raise NotAValidOption(layer_type, self.possible_layers)
+
+        if layer_type.lower() == 'dense':
+            if self.layers == 0:
+                layer_name = layer_type.capitalize()+'_input'
+            else:
+                layer_name = layer_type.capitalize()+'_hidden'+str(self.layers)
+
+            self.layer_names.append(layer_name)
+            self.layer_units.append(nodes)
+        elif layer_type.lower() == 'conv2d':
+            if self.layers == 0:
+                layer_name = layer_type.capitalize()+'_input'
+            else:
+                layer_name = layer_type.capitalize()+'_hidden'+str(self.layers)
+
+            self.layer_names.append(layer_name)
+            self.layer_units.append(1)
 
         self.layer_types.append(layer_type)
-        self.layer_names.append(layer_name)
-        self.layer_units.append(nodes)
         self.layers = self.layers + 1
 
-        with self.network.subgraph(name=f'cluster_{layer_name}') as layer:
-            if nodes > 10:
-                layer.attr(labeljust='right', labelloc='bottom', label='+'+str(nodes - 10))
-                nodes = 10
-            self.tmp_units.append(nodes)
+        if self.layer_types[-1] == 'dense':
+            with self.network.subgraph(name=f'cluster_{layer_name}') as layer:
+                if nodes > 10:
+                    layer.attr(labeljust='right', labelloc='bottom', label='+'+str(nodes - 10))
+                    nodes = 10
+                self.tmp_units.append(nodes)
 
-            for i in range(nodes):
-                if self.layers == 1:
-                    color = self.color_encoding['input']
-                else:
-                    color = self.color_encoding['hidden']
-                layer.node(f'{layer_name}_{i}', shape='point', style='filled', fillcolor=color)
+                for i in range(nodes):
+                    if self.layers == 1:
+                        color = self.color_encoding['input']
+                    else:
+                        color = self.color_encoding['hidden']
+                    layer.node(f'{layer_name}_{i}', shape='point', style='filled', fillcolor=color)
+        elif self.layer_types[-1] == 'conv2d':
+            with self.network.subgraph(node_attr=dict(shape='box')) as layer:
+                color = self.color_encoding['conv2d']
+                layer.node(name=self.layer_names[-1], label=f"Kernal Size: {kernal_size}", height='1.5', width='1.5', style='filled', fillcolor=color)
 
         return
 
-    def _connect_layers(self, l1_nodes, l2_nodes, l1_name, l2_name):
+    def _connect_layers(self, l1_nodes, l2_nodes, l1_idx, l2_idx):
         # Connect all the nodes between the two layers
 
         for l1 in range(l1_nodes):
             for l2 in range(l2_nodes):
-                n1 = l1_name+'_'+str(l1)
-                n2 = l2_name+'_'+str(l2)
+                if self.layer_types[l1_idx] == 'dense' and self.layer_types[l2_idx] == 'dense':
+                    n1 = self.layer_names[l1_idx]+'_'+str(l1)
+                    n2 = self.layer_names[l2_idx]+'_'+str(l2)
+                elif self.layer_types[l1_idx] == 'dense' and self.layer_types[l2_idx] == 'conv2d':
+                    n1 = self.layer_names[l1_idx]+'_'+str(l1)
+                    n2 = self.layer_names[l2_idx]
+                elif self.layer_types[l1_idx] == 'conv2d' and self.layer_types[l2_idx] == 'dense':
+                    n1 = self.layer_names[l1_idx]
+                    n2 = self.layer_names[l2_idx]+'_'+str(l2)
+                elif self.layer_types[l1_idx] == 'conv2d' and self.layer_types[l2_idx] == 'conv2d':
+                    n1 = self.layer_names[l1_idx]
+                    n2 = self.layer_names[l2_idx]
 
                 self.network.edge(n1, n2)
 
@@ -102,12 +133,13 @@ class visualizer():
             if self.layer_units[i+1] > 10:
                 nodes2 = 10
 
-            self._connect_layers(nodes1, nodes2, self.layer_names[i], self.layer_names[i+1])
+            self._connect_layers(nodes1, nodes2, i, i+1)
 
-        # Updating the color of output dense layer to red
-        with self.network.subgraph(name=f'cluster_{self.layer_names[-1]}') as layer:
-            for i in range(self.tmp_units[-1]):
-                layer.node(f'{self.layer_names[-1]}_{i}', style='filled', fillcolor='red')
+        if self.layer_types[-1] == 'dense':
+            # Updating the color of output dense layer to red
+            with self.network.subgraph(name=f'cluster_{self.layer_names[-1]}') as layer:
+                for i in range(self.tmp_units[-1]):
+                    layer.node(f'{self.layer_names[-1]}_{i}', style='filled', fillcolor='red')
 
         return
 
@@ -189,10 +221,9 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    # net.add_layer('dense', input_nodes)
-    # net.add_layer('dense', hidden_nodes)
-    # net.add_layer('dense', hidden_nodes-5)
-    # net.add_layer('dense', output_nodes)
+    net.add_layer('conv2d', kernal_size=5)
+    net.add_layer('dense', hidden_nodes)
+    net.add_layer('dense', output_nodes)
 
     model = tf.keras.models.Sequential([
         tf.keras.layers.Dense(128, activation='sigmoid'),
@@ -202,6 +233,6 @@ if __name__ == '__main__':
         tf.keras.layers.Conv2D(16, 3)
     ])
 
-    net.from_tensorflow(model)
+    # net.from_tensorflow(model)
     net.visualize()
     net.summarize()
