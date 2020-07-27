@@ -2,8 +2,9 @@
 
 ### 0.1.2
 
-* Added Conv layer, with kernal size parameter
+* Added Conv layer, with kernel size parameter
 * Refactored add_layer function
+* Added Conv layer to from_tensorflow
 
 ### 0.1.1
 
