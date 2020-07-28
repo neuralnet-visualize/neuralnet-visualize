@@ -1,5 +1,11 @@
 # Neural Network Visualizer Version History
 
+### 0.1.3
+
+* Added class docstrings with examples
+* Added some more parameters for conv layer
+* Disabled custom addition of layers after from_tensorflow call
+
 ### 0.1.2
 
 * Added Conv layer, with kernel size parameter

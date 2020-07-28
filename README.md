@@ -6,30 +6,12 @@ A module which creates a neural network with the given architecture(only Dense l
 
 ## Installation
 
-### Before installation
+For installation you can follow the instructions [here](./INSTALLATION.md)
 
-Before installing the module, run the below command at your prompt to install the graphviz
-```shell
-$ sudo apt install graphviz
-```
+## Examples
+Some of the examples can be found [here](./examples)
 
-### Normal installation
-```shell
-$ sudo pip3 install neuralnet-visualize
-```
-
-### Development installation
-```shell
-$ git clone https://github.com/AnuragAnalog/nn_visualize.git
-$ cd nn_visualize
-```
-
-### After installation
-
-After installing the module, if you want to upgrade the module, run the below command.
-```shell
-sudo pip3 install neuralnet-visualize --upgrade
-```
+The docstring style which I have followed is [numpydoc](https://numpydoc.readthedocs.io/en/latest/)
 
 ## How it looks?
 ![A demo](./My-Neural-Network.gv.png)
@@ -37,7 +19,6 @@ sudo pip3 install neuralnet-visualize --upgrade
 ## Future Works
 
 * Add Convolutional layers, Maxpooling, Flatten layers, LSTM's
+* Directly from the pickle files
 * Specific colors for activation functions
-* Specific colors for types of layers
-* Directly convert from tensorflow models
 * Directly convert from pytorch models
