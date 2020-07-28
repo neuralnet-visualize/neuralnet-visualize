@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 
-import sys
 import graphviz as gv
 import tensorflow as tf
+
+from typing import Union
 
 from .exceptions import *
 
@@ -111,7 +112,7 @@ class visualizer():
 
         return layer_name
 
-    def add_layer(self, layer_type, nodes=10, filters=32, kernel_size=3, padding='valid', stride=(1, 1)):
+    def add_layer(self, layer_type, nodes=10, filters=32, kernel_size=3, padding='valid', stride=1):
         """Adds a layer to the network
 
         Parameters
@@ -160,12 +161,18 @@ class visualizer():
         elif self.layer_types_[-1] == 'conv2d':
             with self.network.subgraph(node_attr=dict(shape='box')) as layer:
                 color = self.color_encoding['conv2d']
-                if isinstance(kernel_size, tuple):
+
+                if isinstance(kernel_size, Union[list, tuple].__args__):
                     ksstr = str(kernel_size[0])+"x"+str(kernel_size[0])
                 else:
                     ksstr = str(kernel_size)+"x"+str(kernel_size)
 
-                content = "Kernal Size: "+ksstr+"\nFilters: "+str(filters)+"\nPadding: "+str(padding)
+                if isinstance(stride, Union[list, tuple].__args__):
+                    sstr = str(tuple(stride))
+                else:
+                    sstr = str(stride)
+
+                content = "Kernal Size: "+ksstr+"\nFilters: "+str(filters)+"\nPadding: "+str(padding).capitalize()+"\nStride: "+sstr
                 layer.node(name=self.layer_names_[-1], label=content, height='1.5', width='1.5', style='filled', fillcolor=color)
 
         return
@@ -278,7 +285,7 @@ class visualizer():
         if self.layers_ < 2:
             print("Cannot draw Neural Network")
             print("Add atleast two layers to the network")
-            sys.exit()
+            return
 
         self._build_network()
         self.network.view()
