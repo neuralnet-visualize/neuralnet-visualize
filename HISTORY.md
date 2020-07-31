@@ -1,5 +1,11 @@
 # Neural Network Visualizer Version History
 
+### 0.1.4
+
+* Fixed some bugs
+* Added more layers maxpooling, avgpooling, flatten
+* changed the shape of conv2d layer
+
 ### 0.1.3
 
 * Added class docstrings with examples

@@ -9,7 +9,7 @@ from exceptions import *
 
 class visualizer():
     """
-    Neural Network visualizer class
+    Neural Network Visualizer class
 
     Parameters
     ----------
@@ -22,12 +22,16 @@ class visualizer():
     orientation : str
         orientation of the network architecture, one of 'LR', 'TB', 'BT', 'RL' (case-insensitive)
 
+        LR means Left to Right, TB means Top to Bottom, BT means Bottom to Top, RL means Right to Left
+
     Attributes
     ----------
     orient_ : str
         Orientation of the Architecture
     layers_ : int
         Total number of layers in the architecture
+    nontrain_layers_ : int
+        Number of Non trainable layers such as maxpool, avgpool, flatten etc.
     layer_names_ : list
         Layer names in the architecture
     layer_types_ : list
@@ -70,8 +74,9 @@ class visualizer():
 
     def __init__(self, title="My Neural Network", file_type='png', savepdf=False, orientation='LR'):
         self.title = title
-        self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red', 'conv2d': 'pink', 'maxpool2d': 'blue', 'avgpool2d': 'cyan'}
-        self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d']
+        self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red', 'conv2d': 'pink', 'maxpool2d': 'blue', 'avgpool2d': 'cyan', 'flatten': 'brown'}
+        self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
+        self.spatial_layers = ['conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
         self.possible_filetypes = ['png', 'jpeg', 'jpg', 'svg', 'gif']
         self.possible_orientations = ['LR', 'TB', 'BT', 'RL']
 
@@ -91,6 +96,7 @@ class visualizer():
               node_attr=dict(label='', nodesep='4', shape='circle', width='0.5'))
 
         self.layers_ = 0
+        self.nontrain_layers_ = 0
         self.layer_names_ = list()
         self.layer_types_ = list()
         self.layer_units_ = list()
@@ -104,13 +110,16 @@ class visualizer():
 
         if layer_type.lower() == 'dense':
             self.layer_units_.append(nodes)
-        elif layer_type.lower() in ['conv2d', 'maxpool2d', 'avgpool2d']:
+        elif layer_type.lower() in self.spatial_layers:
             self.layer_units_.append(1)
 
         if self.layers_ == 0:
             layer_name = layer_type.capitalize()+'_input'
         else:
-            layer_name = layer_type.capitalize()+'_hidden'+str(self.layers_)
+            if layer_type.lower() in ['dense', 'conv2d']:
+                layer_name = layer_type.capitalize()+'_hidden'+str(self.layers_ - self.nontrain_layers_)
+            else:
+                layer_name = layer_type.capitalize()
 
         self.layer_names_.append(layer_name)
         self.layer_types_.append(layer_type)
@@ -125,6 +134,8 @@ class visualizer():
         ----------
         layer_type : str
             Type of layer to add to the network (case-insensitive)
+
+            One of the 'dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten'.
         nodes : int, default
             Number of units in the layer
         filters : int, default
@@ -135,7 +146,7 @@ class visualizer():
             One of 'same' or 'valid' (case-insensitive), only if layer_type == 'conv2d'
         stride : int, tuple, list, default
             Stride of the Convolution window, an integer or tuple/list of 2 integers, only if layer_type == 'conv2d'
-        kernel_size : int, tuple, default
+        pool_size : int, tuple, default
             Size of the Maxpooling layer, an integer or tuple of 2 integers only if layer_type in ['maxpool2d', 'avgpool2d']
 
         Raises
@@ -152,6 +163,7 @@ class visualizer():
             raise NotAValidOption(layer_type, self.possible_layers)
 
         layer_name = self._update_meta_data(layer_type, nodes)
+        color = self.color_encoding.get(self.layer_types_[-1], 'black')
 
         if self.layer_types_[-1] == 'dense':
             with self.network.subgraph(name=f'cluster_{layer_name}') as layer:
@@ -166,8 +178,6 @@ class visualizer():
                         color = self.color_encoding['hidden']
                     layer.node(f'{layer_name}_{i}', shape='point', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'conv2d':
-            color = self.color_encoding['conv2d']
-
             if isinstance(kernel_size, Union[list, tuple].__args__):
                 ksstr = "x".join(map(str, kernel_size))
             elif isinstance(kernel_size, int):
@@ -187,7 +197,7 @@ class visualizer():
             with self.network.subgraph(node_attr=dict(shape='box3d')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='1.5', width='1.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'maxpool2d':
-            color = self.color_encoding['maxpool2d']
+            self.nontrain_layers_ = self.nontrain_layers_ + 1
 
             if isinstance(pool_size, Union[list, tuple].__args__):
                 pstr = str(tuple(pool_size))
@@ -201,7 +211,7 @@ class visualizer():
             with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'avgpool2d':
-            color = self.color_encoding['avgpool2d']
+            self.nontrain_layers_ = self.nontrain_layers_ + 1
 
             if isinstance(pool_size, Union[list, tuple].__args__):
                 pstr = str(tuple(pool_size))
@@ -214,6 +224,11 @@ class visualizer():
 
             with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
+        elif self.layer_types_[-1] == 'flatten':
+            self.nontrain_layers_ = self.nontrain_layers_ + 1
+
+            with self.network.subgraph(node_attr=dict(shape='rectangle')) as layer:
+                layer.node(name=self.layer_names_[-1], label='Flatten', height='4.5', width='0.5', style='filled', fillcolor=color)
 
         return
 
@@ -225,13 +240,13 @@ class visualizer():
                 if self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] == 'dense':
                     n1 = self.layer_names_[l1_idx]+'_'+str(l1)
                     n2 = self.layer_names_[l2_idx]+'_'+str(l2)
-                elif self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] in ['conv2d', 'maxpool2d', 'avgpool2d']:
+                elif self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] in self.spatial_layers:
                     n1 = self.layer_names_[l1_idx]+'_'+str(l1)
                     n2 = self.layer_names_[l2_idx]
-                elif self.layer_types_[l1_idx] in ['conv2d', 'maxpool2d', 'avgpool2d'] and self.layer_types_[l2_idx] == 'dense':
+                elif self.layer_types_[l1_idx] in self.spatial_layers and self.layer_types_[l2_idx] == 'dense':
                     n1 = self.layer_names_[l1_idx]
                     n2 = self.layer_names_[l2_idx]+'_'+str(l2)
-                elif self.layer_types_[l1_idx] in ['conv2d', 'maxpool2d', 'avgpool2d'] and self.layer_types_[l2_idx] in ['conv2d', 'maxpool2d', 'avgpool2d']:
+                elif self.layer_types_[l1_idx] in self.spatial_layers and self.layer_types_[l2_idx] in self.spatial_layers:
                     n1 = self.layer_names_[l1_idx]
                     n2 = self.layer_names_[l2_idx]
 
@@ -281,6 +296,8 @@ class visualizer():
                 self.add_layer('maxpool2d', pool_size=layer.pool_size)
             elif type(layer) == tf.keras.layers.AvgPool2D:
                 self.add_layer('avgpool2d', pool_size=layer.pool_size)
+            elif type(layer) == tf.keras.layers.Flatten:
+                self.add_layer('flatten')
 
         self.from_tensorflow_called_ = True
 
@@ -352,6 +369,7 @@ if __name__ == '__main__':
     model = tf.keras.models.Sequential([
         tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
         tf.keras.layers.AvgPool2D(),
+        tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(128, activation='sigmoid'),
         tf.keras.layers.Dense(64, activation='sigmoid'),
         tf.keras.layers.Dense(32, activation='sigmoid'),
