@@ -1,5 +1,10 @@
 # Neural Network Visualizer
 
+[![PyPI version](https://img.shields.io/pypi/v/pypistats.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/neuralnet-visualize/)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/pypistats.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/neuralnet-visualize/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/pypistats.svg)](https://pypistats.org/packages/neuralnet-visualize)
+[![GitHub](https://img.shields.io/github/license/)](LICENSE)
+
 ## What it is?
 
 A module which creates a neural network with the given architecture(only Dense layers)

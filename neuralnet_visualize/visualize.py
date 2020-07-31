@@ -48,6 +48,11 @@ class visualizer():
     visualize()
         Render the network and open it with a suitable application
 
+    Raises
+    ------
+    NotAValidOption
+        When the option is not available
+
     Examples
     --------
     >>> from neuralnet_visualize import visualize as nnviz
@@ -63,8 +68,8 @@ class visualizer():
 
     def __init__(self, title="My Neural Network", file_type='png', savepdf=False, orientation='LR'):
         self.title = title
-        self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red', 'conv2d': 'pink'}
-        self.possible_layers = ['dense', 'conv2d']
+        self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red', 'conv2d': 'pink', 'maxpool2d': 'blue', 'avgpool2d': 'cyan'}
+        self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d']
         self.possible_filetypes = ['png', 'jpeg', 'jpg', 'svg', 'gif']
         self.possible_orientations = ['LR', 'TB', 'BT', 'RL']
 
@@ -112,7 +117,7 @@ class visualizer():
 
         return layer_name
 
-    def add_layer(self, layer_type, nodes=10, filters=32, kernel_size=3, padding='valid', stride=1):
+    def add_layer(self, layer_type, nodes=10, filters=32, kernel_size=3, padding='valid', stride=1, pool_size=2):
         """Adds a layer to the network
 
         Parameters
@@ -122,13 +127,15 @@ class visualizer():
         nodes : int, default
             Number of units in the layer
         filters : int, default
-            NUmber of 2D Convolution to be applied, only if layer_type == 'conv2d'
+            Number of Kernels to be applied, only if layer_type == 'conv2d'
         kernel_size : int, tuple, list, default
             Size of the 2D Convolution window, an integer or tuple/list of 2 integers only if layer_type == 'conv2d'
         padding : str, default
             One of 'same' or 'valid' (case-insensitive), only if layer_type == 'conv2d'
         stride : int, tuple, list, default
             Stride of the Convolution window, an integer or tuple/list of 2 integers, only if layer_type == 'conv2d'
+        kernel_size : int, tuple, default
+            Size of the Maxpooling layer, an integer or tuple of 2 integers only if layer_type in ['maxpool2d', 'avgpool2d']
 
         Raises
         ------
@@ -159,21 +166,33 @@ class visualizer():
                         color = self.color_encoding['hidden']
                     layer.node(f'{layer_name}_{i}', shape='point', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'conv2d':
-            with self.network.subgraph(node_attr=dict(shape='box')) as layer:
+            with self.network.subgraph(node_attr=dict(shape='box3d')) as layer:
                 color = self.color_encoding['conv2d']
 
                 if isinstance(kernel_size, Union[list, tuple].__args__):
-                    ksstr = str(kernel_size[0])+"x"+str(kernel_size[0])
-                else:
+                    ksstr = "x".join(map(str, kernel_size))
+                elif isinstance(kernel_size, int):
                     ksstr = str(kernel_size)+"x"+str(kernel_size)
+                else:
+                    raise TypeError("Expects a int or list/tuple of 2 integers")
 
                 if isinstance(stride, Union[list, tuple].__args__):
                     sstr = str(tuple(stride))
-                else:
+                elif isinstance(stride, int):
                     sstr = str(stride)
+                else:
+                    raise TypeError("Expects a int or list/tuple of 2 integers")
 
                 content = "Kernal Size: "+ksstr+"\nFilters: "+str(filters)+"\nPadding: "+str(padding).capitalize()+"\nStride: "+sstr
                 layer.node(name=self.layer_names_[-1], label=content, height='1.5', width='1.5', style='filled', fillcolor=color)
+        elif self.layer_types_[-1] == 'maxpool2d':
+            color = self.color_encoding['maxpool2d']
+            with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
+                layer.node(name=self.layer_names_[-1], label='Max Pool', height='3', width='1', style='filled', fillcolor=color)
+        elif self.layer_types_[-1] == 'avgpool2d':
+            color = self.color_encoding['avgpool2d']
+            with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
+                layer.node(name=self.layer_names_[-1], label='Avg Pool', height='3', width='1', style='filled', fillcolor=color)
 
         return
 
@@ -235,6 +254,10 @@ class visualizer():
                 self.add_layer('dense', nodes=layer.units)
             elif type(layer) == tf.keras.layers.Conv2D:
                 self.add_layer('conv2d', kernel_size=layer.kernel_size)
+            elif type(layer) == tf.keras.layers.MaxPool2D:
+                self.add_layer('maxpool2d', pool_size=layer.pool_size)
+            elif type(layer) == tf.keras.layers.AvgPool2D:
+                self.add_layer('avgpool2d', pool_size=layer.pool_size)
 
         self.from_tensorflow_called = True
 
@@ -299,19 +322,19 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    # net.add_layer('conv2d', kernel_size=5)
-    # net.add_layer('dense', hidden_nodes)
-    # net.add_layer('dense', output_nodes)
+    net.add_layer('conv2d', kernel_size=[2, 'b'])
+    net.add_layer('dense', hidden_nodes)
+    net.add_layer('dense', output_nodes)
 
-    model = tf.keras.models.Sequential([
-        tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
-        tf.keras.layers.Dense(128, activation='sigmoid'),
-        tf.keras.layers.Dense(64, activation='sigmoid'),
-        tf.keras.layers.Dense(32, activation='sigmoid'),
-        tf.keras.layers.Dense(16, activation='sigmoid')
-    ])
+    # model = tf.keras.models.Sequential([
+        # tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
+        # tf.keras.layers.Dense(128, activation='sigmoid'),
+        # tf.keras.layers.Dense(64, activation='sigmoid'),
+        # tf.keras.layers.Dense(32, activation='sigmoid'),
+        # tf.keras.layers.Dense(16, activation='sigmoid')
+    # ])
 
-    net.from_tensorflow(model)
-    net.add_layer('conv2d', 4)
+    # net.from_tensorflow(model)
+    # net.add_layer('conv2d', kernel_size=2)
     net.visualize()
     net.summarize()
