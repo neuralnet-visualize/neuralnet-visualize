@@ -2,4 +2,4 @@ dev/
 dist/
 /build/
 *.egg-info/
-cmds_which_i_forget.txt
+*.txt
