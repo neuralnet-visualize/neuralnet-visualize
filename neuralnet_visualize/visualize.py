@@ -5,7 +5,7 @@ import tensorflow as tf
 
 from typing import Union
 
-from .exceptions import *
+from exceptions import *
 
 class visualizer():
     """
@@ -34,6 +34,8 @@ class visualizer():
         Layer types of the architecture
     layer_units_ : list
         Number of units each layer of the network
+    from_tensorflow_called_ : bool
+        To check wheather from_tensorflow method called 
 
     Methods
     -------
@@ -92,8 +94,7 @@ class visualizer():
         self.layer_names_ = list()
         self.layer_types_ = list()
         self.layer_units_ = list()
-        self.tmp_units = list()
-        self.from_tensorflow_called = False
+        self.from_tensorflow_called_ = False
 
     def __str__(self):
         return self.title
@@ -103,7 +104,7 @@ class visualizer():
 
         if layer_type.lower() == 'dense':
             self.layer_units_.append(nodes)
-        elif layer_type.lower() == 'conv2d':
+        elif layer_type.lower() in ['conv2d', 'maxpool2d', 'avgpool2d']:
             self.layer_units_.append(1)
 
         if self.layers_ == 0:
@@ -143,7 +144,7 @@ class visualizer():
             When the layer_type is not implemented
         """
 
-        if self.from_tensorflow_called:
+        if self.from_tensorflow_called_:
             print("Network was already created from the tensorflow model object")
             return
 
@@ -157,7 +158,6 @@ class visualizer():
                 if nodes > 10:
                     layer.attr(labeljust='right', labelloc='bottom', label='+'+str(nodes - 10))
                     nodes = 10
-                self.tmp_units.append(nodes)
 
                 for i in range(nodes):
                     if self.layers_ == 1:
@@ -166,33 +166,54 @@ class visualizer():
                         color = self.color_encoding['hidden']
                     layer.node(f'{layer_name}_{i}', shape='point', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'conv2d':
+            color = self.color_encoding['conv2d']
+
+            if isinstance(kernel_size, Union[list, tuple].__args__):
+                ksstr = "x".join(map(str, kernel_size))
+            elif isinstance(kernel_size, int):
+                ksstr = str(kernel_size)+"x"+str(kernel_size)
+            else:
+                raise TypeError("Expects a int or list/tuple of 2 integers")
+
+            if isinstance(stride, Union[list, tuple].__args__):
+                sstr = str(tuple(stride))
+            elif isinstance(stride, int):
+                sstr = str(stride)
+            else:
+                raise TypeError("Expects a int or list/tuple of 2 integers")
+
+            content = "Kernal Size: "+ksstr+"\nFilters: "+str(filters)+"\nPadding: "+str(padding).capitalize()+"\nStride: "+sstr
+
             with self.network.subgraph(node_attr=dict(shape='box3d')) as layer:
-                color = self.color_encoding['conv2d']
-
-                if isinstance(kernel_size, Union[list, tuple].__args__):
-                    ksstr = "x".join(map(str, kernel_size))
-                elif isinstance(kernel_size, int):
-                    ksstr = str(kernel_size)+"x"+str(kernel_size)
-                else:
-                    raise TypeError("Expects a int or list/tuple of 2 integers")
-
-                if isinstance(stride, Union[list, tuple].__args__):
-                    sstr = str(tuple(stride))
-                elif isinstance(stride, int):
-                    sstr = str(stride)
-                else:
-                    raise TypeError("Expects a int or list/tuple of 2 integers")
-
-                content = "Kernal Size: "+ksstr+"\nFilters: "+str(filters)+"\nPadding: "+str(padding).capitalize()+"\nStride: "+sstr
                 layer.node(name=self.layer_names_[-1], label=content, height='1.5', width='1.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'maxpool2d':
             color = self.color_encoding['maxpool2d']
+
+            if isinstance(pool_size, Union[list, tuple].__args__):
+                pstr = str(tuple(pool_size))
+            elif isinstance(stride, int):
+                pstr = str(pool_size)
+            else:
+                raise TypeError("Expects a int or list/tuple of 2 integers")
+
+            content = "Max Pooling\nPool Size: "+pstr
+
             with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
-                layer.node(name=self.layer_names_[-1], label='Max Pool', height='3', width='1', style='filled', fillcolor=color)
+                layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'avgpool2d':
             color = self.color_encoding['avgpool2d']
+
+            if isinstance(pool_size, Union[list, tuple].__args__):
+                pstr = str(tuple(pool_size))
+            elif isinstance(stride, int):
+                pstr = str(pool_size)
+            else:
+                raise TypeError("Expects a int or list/tuple of 2 integers")
+
+            content = "Avg Pooling\nPool Size: "+pstr
+
             with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
-                layer.node(name=self.layer_names_[-1], label='Avg Pool', height='3', width='1', style='filled', fillcolor=color)
+                layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
 
         return
 
@@ -204,13 +225,13 @@ class visualizer():
                 if self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] == 'dense':
                     n1 = self.layer_names_[l1_idx]+'_'+str(l1)
                     n2 = self.layer_names_[l2_idx]+'_'+str(l2)
-                elif self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] == 'conv2d':
+                elif self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] in ['conv2d', 'maxpool2d', 'avgpool2d']:
                     n1 = self.layer_names_[l1_idx]+'_'+str(l1)
                     n2 = self.layer_names_[l2_idx]
-                elif self.layer_types_[l1_idx] == 'conv2d' and self.layer_types_[l2_idx] == 'dense':
+                elif self.layer_types_[l1_idx] in ['conv2d', 'maxpool2d', 'avgpool2d'] and self.layer_types_[l2_idx] == 'dense':
                     n1 = self.layer_names_[l1_idx]
                     n2 = self.layer_names_[l2_idx]+'_'+str(l2)
-                elif self.layer_types_[l1_idx] == 'conv2d' and self.layer_types_[l2_idx] == 'conv2d':
+                elif self.layer_types_[l1_idx] in ['conv2d', 'maxpool2d', 'avgpool2d'] and self.layer_types_[l2_idx] in ['conv2d', 'maxpool2d', 'avgpool2d']:
                     n1 = self.layer_names_[l1_idx]
                     n2 = self.layer_names_[l2_idx]
 
@@ -234,8 +255,10 @@ class visualizer():
 
         if self.layer_types_[-1] == 'dense':
             # Updating the color of output dense layer to red
+
+            nodes = ((self.layer_units_[-1] > 10) and 10) or self.layer_units_[-1]
             with self.network.subgraph(name=f'cluster_{self.layer_names_[-1]}') as layer:
-                for i in range(self.tmp_units[-1]):
+                for i in range(nodes):
                     layer.node(f'{self.layer_names_[-1]}_{i}', style='filled', fillcolor='red')
 
         return
@@ -259,7 +282,7 @@ class visualizer():
             elif type(layer) == tf.keras.layers.AvgPool2D:
                 self.add_layer('avgpool2d', pool_size=layer.pool_size)
 
-        self.from_tensorflow_called = True
+        self.from_tensorflow_called_ = True
 
         return
 
@@ -322,19 +345,19 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    net.add_layer('conv2d', kernel_size=[2, 'b'])
-    net.add_layer('dense', hidden_nodes)
-    net.add_layer('dense', output_nodes)
+    # net.add_layer('conv2d', kernel_size=[2, 'b'])
+    # net.add_layer('dense', hidden_nodes)
+    # net.add_layer('dense', output_nodes)
 
-    # model = tf.keras.models.Sequential([
-        # tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
-        # tf.keras.layers.Dense(128, activation='sigmoid'),
-        # tf.keras.layers.Dense(64, activation='sigmoid'),
-        # tf.keras.layers.Dense(32, activation='sigmoid'),
-        # tf.keras.layers.Dense(16, activation='sigmoid')
-    # ])
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
+        tf.keras.layers.AvgPool2D(),
+        tf.keras.layers.Dense(128, activation='sigmoid'),
+        tf.keras.layers.Dense(64, activation='sigmoid'),
+        tf.keras.layers.Dense(32, activation='sigmoid'),
+        tf.keras.layers.Dense(16, activation='sigmoid')
+    ])
 
-    # net.from_tensorflow(model)
-    # net.add_layer('conv2d', kernel_size=2)
+    net.from_tensorflow(model)
     net.visualize()
     net.summarize()
