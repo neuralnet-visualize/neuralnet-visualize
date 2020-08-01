@@ -27,8 +27,8 @@ The docstring style which I have followed is [numpydoc](https://numpydoc.readthe
 
 ## Future Works
 
-[x] Add Convolutional layers, Maxpooling, Flatten layers
-[ ] Add Sequence model layers
-[ ] Directly from the pickle files
-[ ] Specific colors for activation functions
-[ ] Directly convert from pytorch models
+- [x] Add Convolutional layers, Maxpooling, Flatten layers
+- [ ] Add Sequence model layers
+- [ ] Directly from the pickle files
+- [ ] Specific colors for activation functions
+- [ ] Directly convert from pytorch models
