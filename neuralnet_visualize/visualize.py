@@ -1,11 +1,10 @@
 #!/usr/bin/python3
 
 import graphviz as gv
-import tensorflow as tf
 
 from typing import Union
 
-from exceptions import *
+from .exceptions import *
 
 class visualizer():
     """
@@ -288,15 +287,15 @@ class visualizer():
         """
 
         for layer in model.layers:
-            if type(layer) == tf.keras.layers.Dense:
+            if layer.name.startswith('dense'):
                 self.add_layer('dense', nodes=layer.units)
-            elif type(layer) == tf.keras.layers.Conv2D:
+            elif layer.name.startswith('conv2d'):
                 self.add_layer('conv2d', kernel_size=layer.kernel_size)
-            elif type(layer) == tf.keras.layers.MaxPool2D:
+            elif layer.name.startswith('max_pooling2d'):
                 self.add_layer('maxpool2d', pool_size=layer.pool_size)
-            elif type(layer) == tf.keras.layers.AvgPool2D:
+            elif layer.name.startswith('average_pooling2d'):
                 self.add_layer('avgpool2d', pool_size=layer.pool_size)
-            elif type(layer) == tf.keras.layers.Flatten:
+            elif layer.name.startswith('flatten'):
                 self.add_layer('flatten')
 
         self.from_tensorflow_called_ = True
@@ -368,9 +367,9 @@ if __name__ == '__main__':
 
     model = tf.keras.models.Sequential([
         tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
+        tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
         tf.keras.layers.AvgPool2D(),
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(128, activation='sigmoid'),
         tf.keras.layers.Dense(64, activation='sigmoid'),
         tf.keras.layers.Dense(32, activation='sigmoid'),
         tf.keras.layers.Dense(16, activation='sigmoid')
