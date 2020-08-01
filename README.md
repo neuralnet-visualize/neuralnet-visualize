@@ -1,6 +1,6 @@
 # Neural Network Visualizer
 
-[![PyPI version](https://img.shields.io/pypi/v/pypistats.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/neuralnet-visualize/)
+[![PyPI version](https://img.shields.io/static/v1?logo=pypi&label=pypi&message=v0.1.4&color=red&style=plastic)](https://pypi.org/project/neuralnet-visualize/)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/pypistats.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/neuralnet-visualize/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/pypistats.svg)](https://pypistats.org/packages/neuralnet-visualize)
 [![GitHub](https://img.shields.io/github/license/)](LICENSE)

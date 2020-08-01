@@ -1,5 +1,10 @@
 # Neural Network Visualizer Version History
 
+## 0.2.0
+
+* Made it independent of tensorflow
+* Fixed some bugs
+
 ### 0.1.4
 
 * Fixed some bugs
