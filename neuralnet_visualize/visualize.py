@@ -12,16 +12,18 @@ class visualizer():
 
     Parameters
     ----------
-    title : str
-        Name of the image file
-    file_type : str
-        Extension of the file to be stored in, one of 'png', 'jpeg', 'jpg', 'svg', 'gif' (case-insensitive)
-    savepdf : bool
-        To save in pdf
-    orientation : str
+    title : str, optional
+        Title of your neural network. Default is "Neural Network"
+    filename : str, optional
+        Name of the image file. Default is "neuralnet"
+    file_type : str, optional
+        Extension of the file to be stored in, one of 'png', 'jpeg', 'jpg', 'svg', 'gif' (case-insensitive). Default is 'png'
+    savepdf : bool, optional
+        To save in pdf. Default is False
+    orientation : str, optional
         orientation of the network architecture, one of 'LR', 'TB', 'BT', 'RL' (case-insensitive)
 
-        LR means Left to Right, TB means Top to Bottom, BT means Bottom to Top, RL means Right to Left
+        LR means Left to Right, TB means Top to Bottom, BT means Bottom to Top, RL means Right to Left. Default is 'LR'
 
     Attributes
     ----------
@@ -71,8 +73,9 @@ class visualizer():
     >>> network.visualize()
     """
 
-    def __init__(self, title="My Neural Network", file_type='png', savepdf=False, orientation='LR'):
+    def __init__(self, title="Neural Network", filename='neuralnet', file_type='png', savepdf=False, orientation='LR'):
         self.title = title
+        self.filename = filename
         self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red', 'conv2d': 'pink', 'maxpool2d': 'blue', 'avgpool2d': 'cyan', 'flatten': 'brown'}
         self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
         self.spatial_layers = ['conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
@@ -90,8 +93,8 @@ class visualizer():
             raise NotAValidOption(orientation, self.possible_orientations)
         self.orient_ = orientation
 
-        self.network = gv.Graph(title, directory='./graphs', format=self.file_type,
-              graph_attr=dict(ranksep='2', rankdir=self.orient_, color='white', splines='line'),
+        self.network = gv.Graph(filename=filename, directory='./graphs', format=self.file_type,
+              graph_attr=dict(ranksep='2', rankdir=self.orient_, label=title, labelloc='t', color='white', splines='line'),
               node_attr=dict(label='', nodesep='4', shape='circle', width='0.5'))
 
         self.layers_ = 0
@@ -135,21 +138,23 @@ class visualizer():
             Type of layer to add to the network (case-insensitive)
 
             One of the 'dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten'.
-        nodes : int, default
-            Number of units in the layer
-        filters : int, default
-            Number of Kernels to be applied, only if layer_type == 'conv2d'
-        kernel_size : int, tuple, list, default
-            Size of the 2D Convolution window, an integer or tuple/list of 2 integers only if layer_type == 'conv2d'
-        padding : str, default
-            One of 'same' or 'valid' (case-insensitive), only if layer_type == 'conv2d'
-        stride : int, tuple, list, default
-            Stride of the Convolution window, an integer or tuple/list of 2 integers, only if layer_type == 'conv2d'
-        pool_size : int, tuple, default
-            Size of the Maxpooling layer, an integer or tuple of 2 integers only if layer_type in ['maxpool2d', 'avgpool2d']
+        nodes : int, optional
+            Number of units in the layer. Default is 10
+        filters : int, optional
+            Number of Kernels to be applied, only if layer_type == 'conv2d'. Default is 32
+        kernel_size : int, tuple, list, optional
+            Size of the 2D Convolution window, an integer or tuple/list of 2 integers only if layer_type == 'conv2d'. Default is 3
+        padding : str, optional
+            One of 'same' or 'valid' (case-insensitive), only if layer_type == 'conv2d'. Default is 'valid'
+        stride : int, tuple, list, optional
+            Stride of the Convolution window, an integer or tuple/list of 2 integers, only if layer_type == 'conv2d'. Default is 1
+        pool_size : int, tuple, optional
+            Size of the Maxpooling layer, an integer or tuple of 2 integers only if layer_type in ['maxpool2d', 'avgpool2d']. Default is 2
 
         Raises
         ------
+        TypeError
+            When the datatype of variable is not integer or list/tuple of two integers
         NotAValidOption
             When the layer_type is not implemented
         """
@@ -370,7 +375,6 @@ if __name__ == '__main__':
         tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
         tf.keras.layers.AvgPool2D(),
         tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(64, activation='sigmoid'),
         tf.keras.layers.Dense(32, activation='sigmoid'),
         tf.keras.layers.Dense(16, activation='sigmoid')
     ])
