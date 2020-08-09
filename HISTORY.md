@@ -1,5 +1,10 @@
 # Neural Network Visualizer Version History
 
+# 0.2.1
+
+* Added title to the image
+* Optimized some code
+
 ## 0.2.0
 
 * Made it independent of tensorflow
