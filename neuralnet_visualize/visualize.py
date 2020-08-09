@@ -78,6 +78,7 @@ class visualizer():
         self.spatial_layers = ['conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
         self.possible_filetypes = ['png', 'jpeg', 'jpg', 'svg', 'gif']
         self.possible_orientations = ['LR', 'TB', 'BT', 'RL']
+        self.from_torch_called_ = False
 
         if savepdf:
             self.file_type = 'pdf'
@@ -156,6 +157,9 @@ class visualizer():
 
         if self.from_tensorflow_called_:
             print("Network was already created from the tensorflow model object")
+            return
+        if self.from_torch_called_:
+            print("Network was already created from the PyTorch model")
             return
 
         if layer_type not in self.possible_layers:
@@ -297,13 +301,20 @@ class visualizer():
                 self.add_layer('avgpool2d', pool_size=layer.pool_size)
             elif layer.name.startswith('flatten'):
                 self.add_layer('flatten')
+            # config = layer.get_config() # Using this, we get all the info
+            # necessary, no need to use multiple if/else. 
+            # I'll implement this also soon.
+            # VGG19 or any pretrained architecture won't work like this 
+            # because they have specific names
+            # I found ways to counter this.
 
         self.from_tensorflow_called_ = True
 
         return
 
     def get_meta_data(self):
-        """Give a dictionary which contains meta data of the network.
+        """
+        Give a dictionary which contains meta data of the network.
 
         Returns
         -------
@@ -320,7 +331,9 @@ class visualizer():
         return meta_data
 
     def summarize(self):
-        """Prints a summary of the network in MySQL tabular format
+        """Prints a summary of the network in MySQL tabular format.\n
+        Currently, we are support tensorflow models.\n We will implement
+        pytorch summarization soon
         """
 
         title = "Neural Network Architecture"
@@ -341,7 +354,10 @@ class visualizer():
         return
 
     def visualize(self):
-        """Visualize the network
+        """
+        Visualize the network in the form of a graph.
+
+        Opens an image containing the visualised network
         """
 
         if self.layers_ < 2:
