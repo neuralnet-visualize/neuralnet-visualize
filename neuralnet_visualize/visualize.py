@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
 import graphviz as gv
+import tensorflow as tf
 
 from typing import Union
 
-from .exceptions import *
+from exceptions import *
 
 class visualizer():
     """
@@ -32,7 +33,7 @@ class visualizer():
     layers_ : int
         Total number of layers in the architecture
     nontrain_layers_ : int
-        Number of Non trainable layers such as maxpool, avgpool, flatten etc.
+        Number of layers whose parameters are non-trainable such as maxpool, avgpool, flatten etc.
     layer_names_ : list
         Layer names in the architecture
     layer_types_ : list
@@ -107,6 +108,27 @@ class visualizer():
     def __str__(self):
         return self.title
 
+    def _check_dtype(self, value, val_type):
+        # Check the datatype of the variable
+
+        if isinstance(value, Union[list, tuple].__args__):
+            if isinstance(value[0], int) and isinstance(value[1], int):
+                if val_type == 'kernel_size':
+                    vstr = "x".join(map(str, value))
+                else:
+                    vstr = str(tuple(value))
+            else:
+                raise TypeError("Expects a list/tuple of 2 integers")
+        elif isinstance(value, int):
+            if val_type == 'kernel_size':
+                vstr = str(value)+"x"+str(value)
+            else:
+                vstr = str(value)
+        else:
+            raise TypeError("Expects an int or a list/tuple of 2 integers")
+
+        return vstr
+
     def _update_meta_data(self, layer_type, nodes):
         # Update the meta data of the network
 
@@ -155,13 +177,14 @@ class visualizer():
         ------
         TypeError
             When the datatype of variable is not integer or list/tuple of two integers
+        CannotCreateModel
+            When a model cannot be created under certain conditions
         NotAValidOption
             When the layer_type is not implemented
         """
 
         if self.from_tensorflow_called_:
-            print("Network was already created from the tensorflow model object")
-            return
+            raise CannotCreateModel("Network was already created from the tensorflow model object")
 
         if layer_type not in self.possible_layers:
             raise NotAValidOption(layer_type, self.possible_layers)
@@ -182,19 +205,8 @@ class visualizer():
                         color = self.color_encoding['hidden']
                     layer.node(f'{layer_name}_{i}', shape='point', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'conv2d':
-            if isinstance(kernel_size, Union[list, tuple].__args__):
-                ksstr = "x".join(map(str, kernel_size))
-            elif isinstance(kernel_size, int):
-                ksstr = str(kernel_size)+"x"+str(kernel_size)
-            else:
-                raise TypeError("Expects a int or list/tuple of 2 integers")
-
-            if isinstance(stride, Union[list, tuple].__args__):
-                sstr = str(tuple(stride))
-            elif isinstance(stride, int):
-                sstr = str(stride)
-            else:
-                raise TypeError("Expects a int or list/tuple of 2 integers")
+            ksstr = self._check_dtype(kernel_size, 'kernel_size')
+            sstr = self._check_dtype(stride, 'stride')
 
             content = "Kernal Size: "+ksstr+"\nFilters: "+str(filters)+"\nPadding: "+str(padding).capitalize()+"\nStride: "+sstr
 
@@ -203,13 +215,7 @@ class visualizer():
         elif self.layer_types_[-1] == 'maxpool2d':
             self.nontrain_layers_ = self.nontrain_layers_ + 1
 
-            if isinstance(pool_size, Union[list, tuple].__args__):
-                pstr = str(tuple(pool_size))
-            elif isinstance(stride, int):
-                pstr = str(pool_size)
-            else:
-                raise TypeError("Expects a int or list/tuple of 2 integers")
-
+            pstr = self._check_dtype(pool_size, 'pool_size')
             content = "Max Pooling\nPool Size: "+pstr
 
             with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
@@ -217,13 +223,7 @@ class visualizer():
         elif self.layer_types_[-1] == 'avgpool2d':
             self.nontrain_layers_ = self.nontrain_layers_ + 1
 
-            if isinstance(pool_size, Union[list, tuple].__args__):
-                pstr = str(tuple(pool_size))
-            elif isinstance(stride, int):
-                pstr = str(pool_size)
-            else:
-                raise TypeError("Expects a int or list/tuple of 2 integers")
-
+            pstr = self._check_dtype(pool_size, 'pool_size')
             content = "Avg Pooling\nPool Size: "+pstr
 
             with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
@@ -347,12 +347,15 @@ class visualizer():
 
     def visualize(self):
         """Visualize the network
+
+        Raises
+        ------
+        CannotCreateModel
+            When a model cannot be created under certain conditions
         """
 
         if self.layers_ < 2:
-            print("Cannot draw Neural Network")
-            print("Add atleast two layers to the network")
-            return
+            raise CannotCreateModel("Cannot draw Neural Network, Add atleast two layers to the network")
 
         self._build_network()
         self.network.view()
@@ -366,19 +369,20 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    # net.add_layer('conv2d', kernel_size=[2, 'b'])
-    # net.add_layer('dense', hidden_nodes)
-    # net.add_layer('dense', output_nodes)
+    net.add_layer('conv2d', kernel_size=[2, 2.3])
+    net.add_layer('dense', hidden_nodes)
+    net.add_layer('dense', output_nodes)
 
-    model = tf.keras.models.Sequential([
-        tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
-        tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
-        tf.keras.layers.AvgPool2D(),
-        tf.keras.layers.Flatten(),
-        tf.keras.layers.Dense(32, activation='sigmoid'),
-        tf.keras.layers.Dense(16, activation='sigmoid')
-    ])
+    # model = tf.keras.models.Sequential([
+        # tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
+        # tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
+        # tf.keras.layers.AvgPool2D(),
+        # tf.keras.layers.Flatten(),
+        # tf.keras.layers.Dense(64, activation='sigmoid'),
+        # tf.keras.layers.Dense(32, activation='sigmoid'),
+        # tf.keras.layers.Dense(16, activation='sigmoid')
+    # ])
 
-    net.from_tensorflow(model)
+    # net.from_tensorflow(model)
     net.visualize()
     net.summarize()
