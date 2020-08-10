@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import tensorflow as tf
 from neuralnet_visualize.visualize import visualizer as nnviz
 
@@ -12,8 +14,8 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dense(128, activation='swish'),
     tf.keras.layers.Dense(5, activation='softmax'),
 ])
+
 model.compile()
 net = nnviz()
 net.from_tensorflow(model)
-net.visualize()
 net.summarize()
