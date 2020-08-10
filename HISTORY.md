@@ -1,5 +1,10 @@
 # Neural Network Visualizer Version History
 
+# 0.2.2
+
+* Added more docstring
+* Can now be downloaded in py2
+
 # 0.2.1
 
 * Added title to the image
