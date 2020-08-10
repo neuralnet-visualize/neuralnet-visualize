@@ -24,7 +24,7 @@ Some of the examples can be found [here](./examples)
 The docstring style which I have followed is [numpydoc](https://numpydoc.readthedocs.io/en/latest/)
 
 ## Network Visualization
-![A demo](./My-Neural-Network.gv.png)
+![A demo](./neuralnet.png)
 ![CNN](examples/graphs/CNN.png)
 
 ## Future Works

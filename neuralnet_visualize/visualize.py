@@ -1,11 +1,10 @@
 #!/usr/bin/python3
 
 import graphviz as gv
-import tensorflow as tf
 
 from typing import Union
 
-from exceptions import *
+from .exceptions import *
 
 class visualizer():
     """
@@ -32,14 +31,16 @@ class visualizer():
         Orientation of the Architecture
     layers_ : int
         Total number of layers in the architecture
-    nontrain_layers_ : int
-        Number of layers whose parameters are non-trainable such as maxpool, avgpool, flatten etc.
+    network_ : graphviz.dot.Graph
+        The Graphviz graph object
     layer_names_ : list
         Layer names in the architecture
     layer_types_ : list
         Layer types of the architecture
     layer_units_ : list
         Number of units each layer of the network
+    nontrain_layers_ : int
+        Number of layers whose parameters are non-trainable such as maxpool, avgpool, flatten etc.
     from_tensorflow_called_ : bool
         To check wheather from_tensorflow method called 
 
@@ -82,7 +83,6 @@ class visualizer():
         self.spatial_layers = ['conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
         self.possible_filetypes = ['png', 'jpeg', 'jpg', 'svg', 'gif']
         self.possible_orientations = ['LR', 'TB', 'BT', 'RL']
-        self.from_torch_called_ = False
 
         if savepdf:
             self.file_type = 'pdf'
@@ -95,7 +95,7 @@ class visualizer():
             raise NotAValidOption(orientation, self.possible_orientations)
         self.orient_ = orientation
 
-        self.network = gv.Graph(filename=filename, directory='./graphs', format=self.file_type,
+        self.network_ = gv.Graph(filename=filename, directory='./graphs', format=self.file_type,
               graph_attr=dict(ranksep='2', rankdir=self.orient_, label=title, labelloc='t', color='white', splines='line'),
               node_attr=dict(label='', nodesep='4', shape='circle', width='0.5'))
 
@@ -104,6 +104,7 @@ class visualizer():
         self.layer_names_ = list()
         self.layer_types_ = list()
         self.layer_units_ = list()
+        self.from_torch_called_ = False
         self.from_tensorflow_called_ = False
 
     def __str__(self):
@@ -185,12 +186,10 @@ class visualizer():
         """
 
         if self.from_tensorflow_called_:
-            print("Network was already created from the tensorflow model object")
-            return
-        if self.from_torch_called_:
-            print("Network was already created from the PyTorch model")
-            return
             raise CannotCreateModel("Network was already created from the tensorflow model object")
+    
+        if self.from_torch_called_:
+            raise CannotCreateModel("Network was already created from the pytorch model object")
 
         if layer_type not in self.possible_layers:
             raise NotAValidOption(layer_type, self.possible_layers)
@@ -199,7 +198,7 @@ class visualizer():
         color = self.color_encoding.get(self.layer_types_[-1], 'black')
 
         if self.layer_types_[-1] == 'dense':
-            with self.network.subgraph(name=f'cluster_{layer_name}') as layer:
+            with self.network_.subgraph(name='cluster_{}'.format(layer_name)) as layer:
                 if nodes > 10:
                     layer.attr(labeljust='right', labelloc='bottom', label='+'+str(nodes - 10))
                     nodes = 10
@@ -209,14 +208,14 @@ class visualizer():
                         color = self.color_encoding['input']
                     else:
                         color = self.color_encoding['hidden']
-                    layer.node(f'{layer_name}_{i}', shape='point', style='filled', fillcolor=color)
+                    layer.node('{}_{}'.format(layer_name, i), shape='point', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'conv2d':
             ksstr = self._check_dtype(kernel_size, 'kernel_size')
             sstr = self._check_dtype(stride, 'stride')
 
             content = "Kernal Size: "+ksstr+"\nFilters: "+str(filters)+"\nPadding: "+str(padding).capitalize()+"\nStride: "+sstr
 
-            with self.network.subgraph(node_attr=dict(shape='box3d')) as layer:
+            with self.network_.subgraph(node_attr=dict(shape='box3d')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='1.5', width='1.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'maxpool2d':
             self.nontrain_layers_ = self.nontrain_layers_ + 1
@@ -224,7 +223,7 @@ class visualizer():
             pstr = self._check_dtype(pool_size, 'pool_size')
             content = "Max Pooling\nPool Size: "+pstr
 
-            with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
+            with self.network_.subgraph(node_attr=dict(shape='ellipse')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'avgpool2d':
             self.nontrain_layers_ = self.nontrain_layers_ + 1
@@ -232,12 +231,12 @@ class visualizer():
             pstr = self._check_dtype(pool_size, 'pool_size')
             content = "Avg Pooling\nPool Size: "+pstr
 
-            with self.network.subgraph(node_attr=dict(shape='ellipse')) as layer:
+            with self.network_.subgraph(node_attr=dict(shape='ellipse')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'flatten':
             self.nontrain_layers_ = self.nontrain_layers_ + 1
 
-            with self.network.subgraph(node_attr=dict(shape='rectangle')) as layer:
+            with self.network_.subgraph(node_attr=dict(shape='rectangle')) as layer:
                 layer.node(name=self.layer_names_[-1], label='Flatten', height='4.5', width='0.5', style='filled', fillcolor=color)
 
         return
@@ -260,7 +259,7 @@ class visualizer():
                     n1 = self.layer_names_[l1_idx]
                     n2 = self.layer_names_[l2_idx]
 
-                self.network.edge(n1, n2)
+                self.network_.edge(n1, n2)
 
         return
 
@@ -282,9 +281,9 @@ class visualizer():
             # Updating the color of output dense layer to red
 
             nodes = ((self.layer_units_[-1] > 10) and 10) or self.layer_units_[-1]
-            with self.network.subgraph(name=f'cluster_{self.layer_names_[-1]}') as layer:
+            with self.network_.subgraph(name='cluster_{}'.format(self.layer_names_[-1])) as layer:
                 for i in range(nodes):
-                    layer.node(f'{self.layer_names_[-1]}_{i}', style='filled', fillcolor='red')
+                    layer.node('{}_{}'.format(self.layer_names_[-1], i), style='filled', fillcolor='red')
 
         return
 
@@ -320,8 +319,7 @@ class visualizer():
         return
 
     def get_meta_data(self):
-        """
-        Give a dictionary which contains meta data of the network.
+        """Give a dictionary which contains meta data of the network.
 
         Returns
         -------
@@ -360,18 +358,36 @@ class visualizer():
 
         return
 
-    def visualize(self):
-        """
-        Visualize the network in the form of a graph.
+    def visualize(self, give_obj=False):
+        """Visualize the network
 
         Opens an image containing the visualised network
+
+        Parameters
+        ----------
+        give_obj : bool, optional
+            If set true, returns the graph object. Deafult is False
+
+        Returns
+        -------
+        network_ : graphviz.dot.Graph
+            The graphviz graph object after complete building of the network
+
+        Raises
+        ------
+        CannotCreateModel
+            When a model cannot be created under certain conditions
         """
 
         if self.layers_ < 2:
             raise CannotCreateModel("Cannot draw Neural Network, Add atleast two layers to the network")
 
         self._build_network()
-        self.network.view()
+
+        if give_obj:
+            return self.network_
+
+        self.network_.view()
 
         return
 
@@ -382,7 +398,7 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    net.add_layer('conv2d', kernel_size=[2, 2.3])
+    net.add_layer('conv2d', kernel_size=[2, 2])
     net.add_layer('dense', hidden_nodes)
     net.add_layer('dense', output_nodes)
 
