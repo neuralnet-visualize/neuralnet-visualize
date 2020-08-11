@@ -25,7 +25,6 @@ The docstring style which I have followed is [numpydoc](https://numpydoc.readthe
 
 ## Network Visualization
 ![A demo](./neuralnet.png)
-![CNN](examples/graphs/CNN.png)
 
 ## Future Works
 

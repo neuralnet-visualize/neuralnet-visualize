@@ -290,6 +290,29 @@ class visualizer():
 
         return
 
+    def from_pytorch(self, model) -> None:
+        if self.from_torch_called_ == True:
+            print("The model has already been initialised.")
+            return
+        layers = model.module() # Returns a generator object
+        split = str().split
+        for layer in layers:
+            layer_name = split(str(type(layer)),"'")[1] # Returns string like torch.nn.modules.container.Sequential/layer
+            layer_name = split(layer,'.')[-1] # Splitting by . gives us name of layer
+            if layer_name in ['Sequential','Module', 'ModuleDict','ModuleList']:
+                continue
+            self.add_layer(layer_name,**self._create_dict(layer_name,layer.extra_repr()))
+        self.from_torch_called_ = True
+        return
+    def _create_dict(self, layer_name:str, config:str)->dict:
+        params = {}
+        config_list = config.split(', ')
+        if layer_name.lower()=='conv2d':
+            for param in config_list:
+                # params['kernel_size'] = 
+                pass
+            return params
+
     def from_tensorflow(self, model):
         """Converts a given tensorflow model into graph
 
