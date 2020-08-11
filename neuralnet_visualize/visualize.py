@@ -199,6 +199,9 @@ class visualizer():
 
         if self.layer_types_[-1] == 'dense':
             with self.network_.subgraph(name='cluster_{}'.format(layer_name)) as layer:
+                # update label so that title doesn't print multiple times
+                layer.graph_attr.update(dict(label=""))
+
                 if nodes > 10:
                     layer.attr(labeljust='right', labelloc='bottom', label='+'+str(nodes - 10))
                     nodes = 10
@@ -296,16 +299,18 @@ class visualizer():
             A tensorflow model
         """
 
-        for layer in model.layers:
-            if layer.name.startswith('dense'):
-                self.add_layer('dense', nodes=layer.units)
-            elif layer.name.startswith('conv2d'):
-                self.add_layer('conv2d', kernel_size=layer.kernel_size)
-            elif layer.name.startswith('max_pooling2d'):
-                self.add_layer('maxpool2d', pool_size=layer.pool_size)
-            elif layer.name.startswith('average_pooling2d'):
-                self.add_layer('avgpool2d', pool_size=layer.pool_size)
-            elif layer.name.startswith('flatten'):
+        layers = model.get_config()['layers']
+        for layer in layers:
+            layer_params = layer['config']
+            if layer['class_name'] == 'Dense':
+                self.add_layer('dense', nodes=layer_params['units'])
+            elif layer['class_name'] == 'Conv2D':
+                self.add_layer('conv2d', filters=layer_params['filters'], kernel_size=layer_params['kernel_size'], stride=layer_params['strides'], padding=layer_params['padding'])
+            elif layer['class_name'] == 'MaxPooling2D':
+                self.add_layer('maxpool2d', pool_size=layer_params['pool_size'])
+            elif layer['class_name'] == 'AveragePooling2D':
+                self.add_layer('avgpool2d', pool_size=layer_params['pool_size'])
+            elif layer['class_name'] == 'Flatten':
                 self.add_layer('flatten')
             # config = layer.get_config() # Using this, we get all the info
             # necessary, no need to use multiple if/else. 
@@ -398,20 +403,20 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    net.add_layer('conv2d', kernel_size=[2, 2])
-    net.add_layer('dense', hidden_nodes)
-    net.add_layer('dense', output_nodes)
+    # net.add_layer('conv2d', input_nodes)
+    # net.add_layer('dense', hidden_nodes)
+    # net.add_layer('dense', output_nodes)
 
-    # model = tf.keras.models.Sequential([
-        # tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
-        # tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
-        # tf.keras.layers.AvgPool2D(),
-        # tf.keras.layers.Flatten(),
-        # tf.keras.layers.Dense(64, activation='sigmoid'),
-        # tf.keras.layers.Dense(32, activation='sigmoid'),
-        # tf.keras.layers.Dense(16, activation='sigmoid')
-    # ])
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
+        tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
+        tf.keras.layers.AvgPool2D(),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(64, activation='sigmoid'),
+        tf.keras.layers.Dense(32, activation='sigmoid'),
+        tf.keras.layers.Dense(16, activation='sigmoid')
+    ])
 
-    # net.from_tensorflow(model)
+    net.from_tensorflow(model)
     net.visualize()
     net.summarize()

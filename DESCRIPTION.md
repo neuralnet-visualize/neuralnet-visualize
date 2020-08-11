@@ -2,7 +2,7 @@
 
 ## General Description
 
-A module which creates a neural network with the given architecture(only Dense layers)
+A module which creates a neural network image with the given architecture. It's a handy tool to see how your network is built as compared to a model summary.
 
 ## Installation
 
@@ -33,6 +33,8 @@ sudo pip3 install neuralnet-visualize --upgrade
 
 ## Future Works
 
-* Add Convolutional layers, Maxpooling, Flatten layers, LSTM's
-* Specific colors for activation functions
-* Specific colors for types of layers
+- [x] Add Convolutional layers, Maxpooling, Flatten layers
+- [ ] Add Sequence model layers
+- [ ] Directly from the pickle files
+- [ ] Specific colors for activation functions
+- [ ] Directly convert from pytorch models

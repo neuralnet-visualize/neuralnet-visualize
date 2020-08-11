@@ -1,5 +1,10 @@
 # Neural Network Visualizer Version History
 
+### 0.2.3
+
+* Fixed a bug of multiple titles in an image
+* Changed the logic of from_tensorflow method
+
 ### 0.2.2
 
 * Added more docstring
