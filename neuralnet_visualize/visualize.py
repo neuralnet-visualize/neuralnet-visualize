@@ -368,7 +368,9 @@ class visualizer():
         Currently, we are support tensorflow models.\n We will implement
         pytorch summarization soon
         """
-
+        if self.from_torch_called_==True:
+            raise NotImplementedError
+        
         title = "Neural Network Architecture"
         hline = "+"+"-"*69+"+"
 
