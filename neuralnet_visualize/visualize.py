@@ -81,7 +81,7 @@ class visualizer():
         self.title = title
         self.filename = filename
         self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red', 'conv2d': 'pink', 'maxpool2d': 'blue', 'avgpool2d': 'cyan', 'flatten': 'brown'}
-        self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
+        self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten','relu','sigmoid','softmax','swish']
         self.spatial_layers = ['conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
         self.possible_filetypes = ['png', 'jpeg', 'jpg', 'svg', 'gif']
         self.possible_orientations = ['LR', 'TB', 'BT', 'RL']
@@ -293,29 +293,36 @@ class visualizer():
         return
 
     def from_pytorch(self, model) -> None:
-        raise CannotCreateModel('Summarizing from pytorch models has not been built yet.')
+        # raise CannotCreateModel('Summarizing from pytorch models has not been built yet.')
         if self.from_torch_called_ == True:
             print("The model has already been initialised.")
             return
-        layers = model.module() # Returns a generator object
-        split = str().split
+        layers = model.modules() # Returns a generator object
+        split = str.split
         for layer in layers:
             layer_name = split(str(type(layer)),"'")[1] # Returns string like torch.nn.modules.container.Sequential/layer
-            layer_name = split(layer,'.')[-1] # Splitting by . gives us name of layer
+            layer_name = split(layer_name,'.')[-1] # Splitting by . gives us name of layer
             if layer_name in ['Sequential','Module', 'ModuleDict','ModuleList']:
                 continue
-            self.add_layer(layer_name,**self._create_dict(layer_name,layer.extra_repr()))
+            self.add_layer(layer_name.lower(),**self._create_dict(layer,layer_name.lower()))
         self.from_torch_called_ = True
         return
 
-    def _create_dict(self, layer_name:str, config:str)->dict:
+    def _create_dict(self, layer, layer_name:str)->dict:
         params = {}
-        config_list = config.split(', ')
-        if layer_name.lower()=='conv2d':
-            for param in config_list:
-                # params['kernel_size'] = 
-                pass
+        if layer_name == 'conv2d':
+            params['kernel_size'] = layer.kernel_size
+            params['filters']     = layer.out_channels
+            params['stride']      = layer.stride
+            params['padding']     = layer.padding
             return params
+        if layer_name == 'maxpool2d' or layer_name == 'avgpool':
+            params['pool_size']   = layer.kernel_size
+            return params
+        if layer_name == 'dense':
+            params['nodes'] = layer.out_features
+            return params
+        return params
 
     def from_tensorflow(self, model):
         """Converts a given tensorflow model into graph
