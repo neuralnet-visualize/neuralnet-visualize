@@ -4,7 +4,7 @@ import graphviz as gv
 
 from typing import Union
 
-from exceptions import *
+from .exceptions import *
 
 class visualizer():
     """
