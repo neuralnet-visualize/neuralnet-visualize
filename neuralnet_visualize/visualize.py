@@ -4,7 +4,7 @@ import graphviz as gv
 
 from typing import Union
 
-from exceptions import *
+from .exceptions import *
 
 class visualizer():
     """
@@ -288,7 +288,7 @@ class visualizer():
 
             self._connect_layers(nodes1, nodes2, i, i+1)
 
-        if self.layer_types_[-1] == 'dense':
+        if self.layer_types_[-1] == 'dense' or self.layer_types_[-1] == 'linear':
             # Updating the color of output dense layer to red
 
             nodes = ((self.layer_units_[-1] > 10) and 10) or self.layer_units_[-1]
@@ -299,7 +299,6 @@ class visualizer():
         return
 
     def from_pytorch(self, model) -> None:
-        # raise CannotCreateModel('Summarizing from pytorch models has not been built yet.')
         if self.from_torch_called_ == True:
             print("The model has already been initialised.")
             return
@@ -310,15 +309,11 @@ class visualizer():
             layer_name = split(layer_name,'.')[-1].lower() # Splitting by . gives us name of layer
             if layer_name not in self.possible_layers:
                 continue
-            # print(layer,layer_name)
-            # if layer_name in ['sequential','module', 'moduledict','modulelist']:
-            #     continue
             self.add_layer(**self._create_dict(layer,layer_name))
         self.from_torch_called_ = True
         return
 
     def _create_dict(self, layer, layer_name:str)->dict:
-        # self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten','relu','sigmoid','softmax','swish']
         params = {}
         if layer_name == 'conv2d':
             params['layer_type'] = layer_name
@@ -400,12 +395,12 @@ class visualizer():
         ValueError
             when the model is not yet created
         """
-        if self.from_torch_called_==True:
-            raise NotImplementedError('Summarizing from pytorch models has not been built yet.')
-        # if self.from_tensorflow_called_==True and :
-        if self.get_meta_data()['Number of Layers']<2:
-            raise ValueError('The model has not been built yet or the model is not supported.\n Check the docs for furt\
-                            her information')
+
+        if not self.from_torch_called_ and not self.from_tensorflow_called_ and self.layers_ < 2:
+            if not self.from_torch_called_ and not self.from_tensorflow_called_:
+                raise ValueError('This model has not yet been created. Create the model first by calling `from_pytorch()` or calling `from_tensorflow()`')
+            else:
+                raise ValueError('The model has not been built yet or the model is not supported.\n Check the docs for further information')
         
         title = "Neural Network Architecture"
         hline = "+"+"-"*69+"+"
@@ -432,7 +427,7 @@ class visualizer():
         Parameters
         ----------
         give_obj : bool, optional
-            If set true, returns the graph object. Deafult is False
+            If set true, returns the graph object. Default is False
 
         Returns
         -------
