@@ -380,7 +380,9 @@ class visualizer():
         if self.from_torch_called_==True:
             raise NotImplementedError('Summarizing from pytorch models has not been built yet.')
         # if self.from_tensorflow_called_==True and :
-
+        if self.get_meta_data()['Number of Layers']<2:
+            raise ValueError('The model has not been built yet or the model is not supported.\n Check the docs for furt\
+                            her information')
         
         title = "Neural Network Architecture"
         hline = "+"+"-"*69+"+"
