@@ -293,7 +293,6 @@ class visualizer():
         return
 
     def from_pytorch(self, model) -> None:
-        raise CannotCreateModel('Summarizing from pytorch models has not been built yet.')
         if self.from_torch_called_ == True:
             print("The model has already been initialised.")
             return
@@ -377,12 +376,12 @@ class visualizer():
         ValueError
             when the model is not yet created
         """
-        if self.from_torch_called_==True:
-            raise NotImplementedError('Summarizing from pytorch models has not been built yet.')
-        # if self.from_tensorflow_called_==True and :
-        if self.get_meta_data()['Number of Layers']<2:
-            raise ValueError('The model has not been built yet or the model is not supported.\n Check the docs for furt\
-                            her information')
+
+        if not self.from_torch_called_ and not self.from_tensorflow_called_ and self.layers_ < 2:
+            if not self.from_torch_called_ and not self.from_tensorflow_called_:
+                raise ValueError('This model has not yet been created. Create the model first by calling `from_pytorch()` or calling `from_tensorflow()`')
+            else:
+                raise ValueError('The model has not been built yet or the model is not supported.\n Check the docs for further information')
         
         title = "Neural Network Architecture"
         hline = "+"+"-"*69+"+"
@@ -409,7 +408,7 @@ class visualizer():
         Parameters
         ----------
         give_obj : bool, optional
-            If set true, returns the graph object. Deafult is False
+            If set true, returns the graph object. Default is False
 
         Returns
         -------
