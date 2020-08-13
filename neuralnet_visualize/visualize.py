@@ -4,7 +4,7 @@ import graphviz as gv
 
 from typing import Union
 
-from .exceptions import *
+from exceptions import *
 
 class visualizer():
     """
@@ -291,6 +291,7 @@ class visualizer():
         return
 
     def from_pytorch(self, model) -> None:
+        raise CannotCreateModel('Summarizing from pytorch models has not been built yet.')
         if self.from_torch_called_ == True:
             print("The model has already been initialised.")
             return
@@ -369,7 +370,9 @@ class visualizer():
         pytorch summarization soon
         """
         if self.from_torch_called_==True:
-            raise NotImplementedError
+            raise NotImplementedError('Summarizing from pytorch models has not been built yet.')
+        # if self.from_tensorflow_called_==True and :
+
         
         title = "Neural Network Architecture"
         hline = "+"+"-"*69+"+"
