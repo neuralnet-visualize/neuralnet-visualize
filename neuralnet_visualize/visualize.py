@@ -81,7 +81,7 @@ class visualizer():
         self.title = title
         self.filename = filename
         self.color_encoding = {'input': 'yellow', 'hidden': 'green', 'output': 'red', 'conv2d': 'pink', 'maxpool2d': 'blue', 'avgpool2d': 'cyan', 'flatten': 'brown'}
-        self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten','relu','sigmoid','softmax','swish']
+        self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten', 'linear'] #, 'relu', 'sigmoid', 'softmax', 'swish']
         self.spatial_layers = ['conv2d', 'maxpool2d', 'avgpool2d', 'flatten']
         self.possible_filetypes = ['png', 'jpeg', 'jpg', 'svg', 'gif']
         self.possible_orientations = ['LR', 'TB', 'BT', 'RL']
@@ -133,10 +133,10 @@ class visualizer():
 
         return vstr
 
-    def _update_meta_data(self, layer_type, nodes):
+    def _update_meta_data(self, layer_type:str, nodes)->str:
         # Update the meta data of the network
 
-        if layer_type.lower() == 'dense':
+        if layer_type.lower() == 'dense' or layer_type.lower() == 'linear':
             self.layer_units_.append(nodes)
         elif layer_type.lower() in self.spatial_layers:
             self.layer_units_.append(1)
@@ -155,7 +155,7 @@ class visualizer():
 
         return layer_name
 
-    def add_layer(self, layer_type, nodes=10, filters=32, kernel_size=3, padding='valid', stride=1, pool_size=2):
+    def add_layer(self, layer_type:str, nodes=10, filters=32, kernel_size=3, padding='valid', stride=1, pool_size=2)->None:
         """Adds a layer to the network
 
         Parameters
@@ -163,7 +163,7 @@ class visualizer():
         layer_type : str
             Type of layer to add to the network (case-insensitive)
 
-            One of the 'dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten'.
+            One of the 'dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten',.
         nodes : int, optional
             Number of units in the layer. Default is 10
         filters : int, optional
@@ -199,7 +199,7 @@ class visualizer():
         layer_name = self._update_meta_data(layer_type, nodes)
         color = self.color_encoding.get(self.layer_types_[-1], 'black')
 
-        if self.layer_types_[-1] == 'dense':
+        if self.layer_types_[-1] == 'dense' or self.layer_types_[-1] == 'linear':
             with self.network_.subgraph(name='cluster_{}'.format(layer_name)) as layer:
                 # update label so that title doesn't print multiple times
                 layer.graph_attr.update(dict(label=""))
@@ -251,12 +251,18 @@ class visualizer():
 
         for l1 in range(l1_nodes):
             for l2 in range(l2_nodes):
-                if self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] == 'dense':
+                if self.layer_types_[l1_idx] == 'linear' and self.layer_types_[l2_idx] == 'linear':
+                    n1 = self.layer_names_[l1_idx]+'_'+str(l1)
+                    n2 = self.layer_names_[l2_idx]+'_'+str(l2)
+                elif self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] == 'dense':
                     n1 = self.layer_names_[l1_idx]+'_'+str(l1)
                     n2 = self.layer_names_[l2_idx]+'_'+str(l2)
                 elif self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] in self.spatial_layers:
                     n1 = self.layer_names_[l1_idx]+'_'+str(l1)
                     n2 = self.layer_names_[l2_idx]
+                elif self.layer_types_[l1_idx] in self.spatial_layers and self.layer_types_[l2_idx] == 'linear':
+                    n1 = self.layer_names_[l1_idx]
+                    n2 = self.layer_names_[l2_idx]+'_'+str(l2)
                 elif self.layer_types_[l1_idx] in self.spatial_layers and self.layer_types_[l2_idx] == 'dense':
                     n1 = self.layer_names_[l1_idx]
                     n2 = self.layer_names_[l2_idx]+'_'+str(l2)
@@ -301,26 +307,36 @@ class visualizer():
         split = str.split
         for layer in layers:
             layer_name = split(str(type(layer)),"'")[1] # Returns string like torch.nn.modules.container.Sequential/layer
-            layer_name = split(layer_name,'.')[-1] # Splitting by . gives us name of layer
-            if layer_name in ['Sequential','Module', 'ModuleDict','ModuleList']:
+            layer_name = split(layer_name,'.')[-1].lower() # Splitting by . gives us name of layer
+            if layer_name not in self.possible_layers:
                 continue
-            self.add_layer(layer_name.lower(),**self._create_dict(layer,layer_name.lower()))
+            # print(layer,layer_name)
+            # if layer_name in ['sequential','module', 'moduledict','modulelist']:
+            #     continue
+            self.add_layer(**self._create_dict(layer,layer_name))
         self.from_torch_called_ = True
         return
 
     def _create_dict(self, layer, layer_name:str)->dict:
+        # self.possible_layers = ['dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten','relu','sigmoid','softmax','swish']
         params = {}
         if layer_name == 'conv2d':
+            params['layer_type'] = layer_name
             params['kernel_size'] = layer.kernel_size
             params['filters']     = layer.out_channels
             params['stride']      = layer.stride
             params['padding']     = layer.padding
             return params
-        if layer_name == 'maxpool2d' or layer_name == 'avgpool':
+        if layer_name == 'maxpool2d' or layer_name == 'avgpool2d':
+            params['layer_type'] = layer_name
             params['pool_size']   = layer.kernel_size
             return params
-        if layer_name == 'dense':
+        if layer_name == 'linear':
+            params['layer_type'] = 'dense'
             params['nodes'] = layer.out_features
+            return params
+        if layer_name == 'flatten':
+            params['layer_type'] = layer_name
             return params
         return params
 
