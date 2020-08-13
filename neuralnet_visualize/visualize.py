@@ -41,6 +41,8 @@ class visualizer():
         Number of units each layer of the network
     nontrain_layers_ : int
         Number of layers whose parameters are non-trainable such as maxpool, avgpool, flatten etc.
+    from_pytorch_called_ : bool
+        To check wheather from_pytorch method called
     from_tensorflow_called_ : bool
         To check wheather from_tensorflow method called 
 
@@ -305,6 +307,7 @@ class visualizer():
             self.add_layer(layer_name,**self._create_dict(layer_name,layer.extra_repr()))
         self.from_torch_called_ = True
         return
+
     def _create_dict(self, layer_name:str, config:str)->dict:
         params = {}
         config_list = config.split(', ')
@@ -368,6 +371,11 @@ class visualizer():
         """Prints a summary of the network in MySQL tabular format.\n
         Currently, we are support tensorflow models.\n We will implement
         pytorch summarization soon
+
+        Raises
+        ------
+        ValueError
+            when the model is not yet created
         """
         if self.from_torch_called_==True:
             raise NotImplementedError('Summarizing from pytorch models has not been built yet.')
