@@ -149,7 +149,9 @@ class visualizer():
             if layer_type.lower() in ['dense', 'conv2d']:
                 layer_name = layer_type.capitalize()+'_hidden'+str(self.layers_ - self.nontrain_layers_)
             else:
-                layer_name = layer_type.capitalize()
+                self.nontrain_layers_ = self.nontrain_layers_ + 1
+
+                layer_name = layer_type.capitalize()+'_'+str(self.nontrain_layers_)
 
         self.layer_names_.append(layer_name)
         self.layer_types_.append(layer_type)
@@ -225,24 +227,18 @@ class visualizer():
             with self.network_.subgraph(node_attr=dict(shape='box3d')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='1.5', width='1.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'maxpool2d':
-            self.nontrain_layers_ = self.nontrain_layers_ + 1
-
             pstr = self._check_dtype(pool_size, 'pool_size')
             content = "Max Pooling\nPool Size: "+pstr
 
             with self.network_.subgraph(node_attr=dict(shape='ellipse')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'avgpool2d':
-            self.nontrain_layers_ = self.nontrain_layers_ + 1
-
             pstr = self._check_dtype(pool_size, 'pool_size')
             content = "Avg Pooling\nPool Size: "+pstr
 
             with self.network_.subgraph(node_attr=dict(shape='ellipse')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'flatten':
-            self.nontrain_layers_ = self.nontrain_layers_ + 1
-
             with self.network_.subgraph(node_attr=dict(shape='rectangle')) as layer:
                 layer.node(name=self.layer_names_[-1], label='Flatten', height='4.5', width='0.5', style='filled', fillcolor=color)
 
@@ -313,8 +309,10 @@ class visualizer():
         for layer in layers:
             layer_name = split(str(type(layer)),"'")[1] # Returns string like torch.nn.modules.container.Sequential/layer
             layer_name = split(layer_name,'.')[-1].lower() # Splitting by . gives us name of layer
+
             if layer_name not in self.possible_layers:
                 continue
+
             self.add_layer(**self._create_dict(layer,layer_name))
 
         self.from_torch_called_ = True
@@ -329,12 +327,12 @@ class visualizer():
         if layer_name == 'conv2d':
             params['layer_type'] = layer_name
             params['kernel_size'] = layer.kernel_size
-            params['filters']     = layer.out_channels
-            params['stride']      = layer.stride
-            params['padding']     = layer.padding
+            params['filters'] = layer.out_channels
+            params['stride'] = layer.stride
+            params['padding'] = layer.padding
         elif layer_name in ['maxpool2d', 'avgpool2d']:
             params['layer_type'] = layer_name
-            params['pool_size']   = layer.kernel_size
+            params['pool_size'] = layer.kernel_size
         elif layer_name == 'linear':
             params['layer_type'] = 'dense'
             params['nodes'] = layer.out_features
@@ -388,9 +386,8 @@ class visualizer():
         return meta_data
 
     def summarize(self):
-        """Prints a summary of the network in MySQL tabular format.\n
-        Currently, we are support tensorflow models.\n We will implement
-        pytorch summarization soon
+        """Prints a summary of the network in MySQL tabular format.\nCurrently, we are support tensorflow 
+        models.\n We will implement pytorch summarization soon
 
         Raises
         ------
@@ -461,20 +458,21 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    net.add_layer('conv2d', input_nodes)
-    net.add_layer('dense', hidden_nodes)
-    net.add_layer('dense', output_nodes)
+    # net.add_layer('conv2d')
+    # net.add_layer('dense', hidden_nodes)
+    # net.add_layer('dense', output_nodes)
 
-    # model = tf.keras.models.Sequential([
-        # tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
-        # tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
-        # tf.keras.layers.AvgPool2D(),
-        # tf.keras.layers.Flatten(),
-        # tf.keras.layers.Dense(64, activation='sigmoid'),
-        # tf.keras.layers.Dense(32, activation='sigmoid'),
-        # tf.keras.layers.Dense(16, activation='sigmoid')
-    # ])
+    model = tf.keras.models.Sequential([
+        tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
+        tf.keras.layers.MaxPool2D(),
+        tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
+        tf.keras.layers.MaxPool2D(),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(64, activation='sigmoid'),
+        tf.keras.layers.Dense(32, activation='sigmoid'),
+        tf.keras.layers.Dense(16, activation='sigmoid')
+    ])
 
-    # net.from_tensorflow(model)
+    net.from_tensorflow(model)
     net.visualize()
     net.summarize()
