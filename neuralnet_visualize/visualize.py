@@ -368,6 +368,18 @@ class visualizer():
 
         return
 
+    def set_color_encoding(self, encoding):
+        """Set Custom Color Encoding to the layers
+
+        Parameters
+        ----------
+        encoding : dict
+        """
+        for k, _ in encoding:
+            self.color_encoding[k] = encoding[k]
+
+        return
+
     def get_meta_data(self):
         """Give a dictionary which contains meta data of the network.
 
