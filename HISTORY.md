@@ -2,8 +2,10 @@
 
 ### 0.2.3
 
+* Added from_pytorch method
 * Fixed a bug of multiple titles in an image
 * Changed the logic of from_tensorflow method
+* Fixed a bug, unique layer names for non trainable layers
 
 ### 0.2.2
 

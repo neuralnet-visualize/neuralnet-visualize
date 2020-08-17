@@ -50,8 +50,10 @@ class visualizer():
     -------
     add_layer()
         Add a layer to the network
+    from_pytorch()
+        Make a network from the PyTorch model object
     from_tensorflow()
-        Make a network from the tensorflow model object
+        Make a network from the TensorFlow model object
     get_meta_data()
         Return a dictionary containing the networks meta data
     summarize()
@@ -136,7 +138,7 @@ class visualizer():
     def _update_meta_data(self, layer_type:str, nodes)->str:
         # Update the meta data of the network
 
-        if layer_type.lower() == 'dense' or layer_type.lower() == 'linear':
+        if layer_type.lower() in ['dense', 'linear']:
             self.layer_units_.append(nodes)
         elif layer_type.lower() in self.spatial_layers:
             self.layer_units_.append(1)
@@ -147,7 +149,9 @@ class visualizer():
             if layer_type.lower() in ['dense', 'conv2d']:
                 layer_name = layer_type.capitalize()+'_hidden'+str(self.layers_ - self.nontrain_layers_)
             else:
-                layer_name = layer_type.capitalize()
+                self.nontrain_layers_ = self.nontrain_layers_ + 1
+
+                layer_name = layer_type.capitalize()+'_'+str(self.nontrain_layers_)
 
         self.layer_names_.append(layer_name)
         self.layer_types_.append(layer_type)
@@ -163,7 +167,7 @@ class visualizer():
         layer_type : str
             Type of layer to add to the network (case-insensitive)
 
-            One of the 'dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten',.
+            One of the 'dense', 'conv2d', 'maxpool2d', 'avgpool2d', 'flatten'.
         nodes : int, optional
             Number of units in the layer. Default is 10
         filters : int, optional
@@ -223,24 +227,18 @@ class visualizer():
             with self.network_.subgraph(node_attr=dict(shape='box3d')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='1.5', width='1.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'maxpool2d':
-            self.nontrain_layers_ = self.nontrain_layers_ + 1
-
             pstr = self._check_dtype(pool_size, 'pool_size')
             content = "Max Pooling\nPool Size: "+pstr
 
             with self.network_.subgraph(node_attr=dict(shape='ellipse')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'avgpool2d':
-            self.nontrain_layers_ = self.nontrain_layers_ + 1
-
             pstr = self._check_dtype(pool_size, 'pool_size')
             content = "Avg Pooling\nPool Size: "+pstr
 
             with self.network_.subgraph(node_attr=dict(shape='ellipse')) as layer:
                 layer.node(name=self.layer_names_[-1], label=content, height='2', width='0.5', style='filled', fillcolor=color)
         elif self.layer_types_[-1] == 'flatten':
-            self.nontrain_layers_ = self.nontrain_layers_ + 1
-
             with self.network_.subgraph(node_attr=dict(shape='rectangle')) as layer:
                 layer.node(name=self.layer_names_[-1], label='Flatten', height='4.5', width='0.5', style='filled', fillcolor=color)
 
@@ -251,19 +249,13 @@ class visualizer():
 
         for l1 in range(l1_nodes):
             for l2 in range(l2_nodes):
-                if self.layer_types_[l1_idx] == 'linear' and self.layer_types_[l2_idx] == 'linear':
+                if self.layer_types_[l1_idx] in ['dense', 'linear'] and self.layer_types_[l2_idx] in ['dense', 'linear']:
                     n1 = self.layer_names_[l1_idx]+'_'+str(l1)
                     n2 = self.layer_names_[l2_idx]+'_'+str(l2)
-                elif self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] == 'dense':
-                    n1 = self.layer_names_[l1_idx]+'_'+str(l1)
-                    n2 = self.layer_names_[l2_idx]+'_'+str(l2)
-                elif self.layer_types_[l1_idx] == 'dense' and self.layer_types_[l2_idx] in self.spatial_layers:
+                elif self.layer_types_[l1_idx] in ['dense', 'linear'] and self.layer_types_[l2_idx] in self.spatial_layers:
                     n1 = self.layer_names_[l1_idx]+'_'+str(l1)
                     n2 = self.layer_names_[l2_idx]
-                elif self.layer_types_[l1_idx] in self.spatial_layers and self.layer_types_[l2_idx] == 'linear':
-                    n1 = self.layer_names_[l1_idx]
-                    n2 = self.layer_names_[l2_idx]+'_'+str(l2)
-                elif self.layer_types_[l1_idx] in self.spatial_layers and self.layer_types_[l2_idx] == 'dense':
+                elif self.layer_types_[l1_idx] in self.spatial_layers and self.layer_types_[l2_idx] in ['dense', 'linear']:
                     n1 = self.layer_names_[l1_idx]
                     n2 = self.layer_names_[l2_idx]+'_'+str(l2)
                 elif self.layer_types_[l1_idx] in self.spatial_layers and self.layer_types_[l2_idx] in self.spatial_layers:
@@ -288,7 +280,7 @@ class visualizer():
 
             self._connect_layers(nodes1, nodes2, i, i+1)
 
-        if self.layer_types_[-1] == 'dense' or self.layer_types_[-1] == 'linear':
+        if self.layer_types_[-1] in ['dense', 'linear']:
             # Updating the color of output dense layer to red
 
             nodes = ((self.layer_units_[-1] > 10) and 10) or self.layer_units_[-1]
@@ -298,45 +290,59 @@ class visualizer():
 
         return
 
-    def from_pytorch(self, model) -> None:
+    def from_pytorch(self, model):
+        """Converts a given PyTorch model into graph
+
+        Parameters
+        ----------
+        model : torch.nn.modules.container.Sequential
+            A pytorch model
+        """
+
         if self.from_torch_called_ == True:
             print("The model has already been initialised.")
             return
+
         layers = model.modules() # Returns a generator object
         split = str.split
+
         for layer in layers:
             layer_name = split(str(type(layer)),"'")[1] # Returns string like torch.nn.modules.container.Sequential/layer
             layer_name = split(layer_name,'.')[-1].lower() # Splitting by . gives us name of layer
+
             if layer_name not in self.possible_layers:
                 continue
+
             self.add_layer(**self._create_dict(layer,layer_name))
+
         self.from_torch_called_ = True
+
         return
 
-    def _create_dict(self, layer, layer_name:str)->dict:
+    def _create_dict(self, layer, layer_name):
+        # creates a parameter dict of layer
+
         params = {}
+
         if layer_name == 'conv2d':
             params['layer_type'] = layer_name
             params['kernel_size'] = layer.kernel_size
-            params['filters']     = layer.out_channels
-            params['stride']      = layer.stride
-            params['padding']     = layer.padding
-            return params
-        if layer_name == 'maxpool2d' or layer_name == 'avgpool2d':
+            params['filters'] = layer.out_channels
+            params['stride'] = layer.stride
+            params['padding'] = layer.padding
+        elif layer_name in ['maxpool2d', 'avgpool2d']:
             params['layer_type'] = layer_name
-            params['pool_size']   = layer.kernel_size
-            return params
-        if layer_name == 'linear':
+            params['pool_size'] = layer.kernel_size
+        elif layer_name == 'linear':
             params['layer_type'] = 'dense'
             params['nodes'] = layer.out_features
-            return params
-        if layer_name == 'flatten':
+        elif layer_name == 'flatten':
             params['layer_type'] = layer_name
-            return params
+
         return params
 
     def from_tensorflow(self, model):
-        """Converts a given tensorflow model into graph
+        """Converts a given TensorFlow model into graph
 
         Parameters
         ----------
@@ -357,12 +363,6 @@ class visualizer():
                 self.add_layer('avgpool2d', pool_size=layer_params['pool_size'])
             elif layer['class_name'] == 'Flatten':
                 self.add_layer('flatten')
-            # config = layer.get_config() # Using this, we get all the info
-            # necessary, no need to use multiple if/else. 
-            # I'll implement this also soon.
-            # VGG19 or any pretrained architecture won't work like this 
-            # because they have specific names
-            # I found ways to counter this.
 
         self.from_tensorflow_called_ = True
 
@@ -386,9 +386,8 @@ class visualizer():
         return meta_data
 
     def summarize(self):
-        """Prints a summary of the network in MySQL tabular format.\n
-        Currently, we are support tensorflow models.\n We will implement
-        pytorch summarization soon
+        """Prints a summary of the network in MySQL tabular format.\nCurrently, we are support tensorflow 
+        models.\n We will implement pytorch summarization soon
 
         Raises
         ------
@@ -459,14 +458,15 @@ if __name__ == '__main__':
 
     net = visualizer()
 
-    # net.add_layer('conv2d', input_nodes)
+    # net.add_layer('conv2d')
     # net.add_layer('dense', hidden_nodes)
     # net.add_layer('dense', output_nodes)
 
     model = tf.keras.models.Sequential([
         tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='sigmoid'),
+        tf.keras.layers.MaxPool2D(),
         tf.keras.layers.Conv2D(filters=64, kernel_size=2, activation='sigmoid'),
-        tf.keras.layers.AvgPool2D(),
+        tf.keras.layers.MaxPool2D(),
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(64, activation='sigmoid'),
         tf.keras.layers.Dense(32, activation='sigmoid'),
