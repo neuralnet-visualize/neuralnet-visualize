@@ -297,11 +297,15 @@ class visualizer():
         ----------
         model : torch.nn.modules.container.Sequential
             A pytorch model
+
+        Raises
+        ------
+        ValueError
+            Multiple calls when it is already initialized.
         """
 
         if self.from_torch_called_ == True:
-            print("The model has already been initialised.")
-            return
+            raise ValueError("The model has already been initialised, with a PyTorch model")
 
         layers = model.modules() # Returns a generator object
         split = str.split
@@ -310,7 +314,7 @@ class visualizer():
             layer_name = split(str(type(layer)),"'")[1] # Returns string like torch.nn.modules.container.Sequential/layer
             layer_name = split(layer_name,'.')[-1].lower() # Splitting by . gives us name of layer
 
-            if layer_name not in self.possible_layers:
+            if layer_name not in self.possible_layers:  # Skip specific activation layers
                 continue
 
             self.add_layer(**self._create_dict(layer,layer_name))
@@ -324,20 +328,18 @@ class visualizer():
 
         params = {}
 
+        params['layer_type'] = layer_name
+
         if layer_name == 'conv2d':
-            params['layer_type'] = layer_name
             params['kernel_size'] = layer.kernel_size
             params['filters'] = layer.out_channels
             params['stride'] = layer.stride
             params['padding'] = layer.padding
         elif layer_name in ['maxpool2d', 'avgpool2d']:
-            params['layer_type'] = layer_name
             params['pool_size'] = layer.kernel_size
         elif layer_name == 'linear':
             params['layer_type'] = 'dense'
             params['nodes'] = layer.out_features
-        elif layer_name == 'flatten':
-            params['layer_type'] = layer_name
 
         return params
 
@@ -374,9 +376,20 @@ class visualizer():
         Parameters
         ----------
         encoding : dict
+            Dictionary which contains the color encoding of the layers
+
+        Raises
+        ------
+        ValueError
+            When the passed object is not a dict
         """
+
+        if not isinstance(encoding, dict):
+            raise ValueError("Expected a dict, but got {}".format(type(encoding)))
+
         for k, _ in encoding:
-            self.color_encoding[k] = encoding[k]
+            if self.color_encoding.get(k, False):
+                self.color_encoding[k] = encoding[k]
 
         return
 
@@ -390,6 +403,7 @@ class visualizer():
         """
 
         meta_data = dict()
+
         meta_data['Number of Layers'] = self.layers_
         meta_data['Layer names'] = self.layer_names_
         meta_data['Layer Types'] = self.layer_types_
