@@ -18,13 +18,17 @@ A module which creates a neural network image with the given architecture. It's 
 
 For installation you can follow the instructions [here](./INSTALLATION.md)
 
+> After the Development installation(linux), run the below command to install all the requirements
+>```shell
+>$ sudo pip3 install -r requirements.txt
+>```
 ## Examples
 Some of the examples can be found [here](./examples)
 
 The docstring style which I have followed is [numpydoc](https://numpydoc.readthedocs.io/en/latest/)
 
 ## Network Visualization
-![A demo](./neuralnet.png)
+![A demo](./images/neuralnet.png)
 
 ## Future Works
 

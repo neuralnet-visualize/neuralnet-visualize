@@ -26,3 +26,14 @@ After installing the module, if you want to upgrade the module, run the below co
 ```shell
 sudo pip3 install neuralnet-visualize --upgrade
 ```
+
+### Screenshots
+
+#### Pre installation
+![pre-installation](./images/install/graphviz_download.gif)
+
+#### Development installation
+![dev-installation](./images/install/develop.gif)
+
+#### Post installation
+![post-installation](./images/install/upgrade.gif)

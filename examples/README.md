@@ -20,3 +20,9 @@ A Deep Neural Network with the following architecture:
 * Output: 3
 
 ![Deep NN](./images/basic_dnn.png)
+
+A Convolutional Network with the following architecture:
+
+* Input Conv2d: kernel 5x5
+* Hidden1: 12
+* Output: 4
