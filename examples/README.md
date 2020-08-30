@@ -26,3 +26,5 @@ A Convolutional Network with the following architecture:
 * Input Conv2d: kernel 5x5
 * Hidden1: 12
 * Output: 4
+
+![conv](./images/conv_layer.png)

@@ -12,3 +12,5 @@ Guide
    :maxdepth: 0
 
    license
+
+.. automodule:: neuralnet_visualize
