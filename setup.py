@@ -18,7 +18,7 @@ setup_args = dict(
     author='Anurag Peddi',
     author_email='anurag.peddi1998@gmail.com',
     keywords=['Deep', 'Visualizer', 'Neural', 'Network', 'Visualize', 'Graphviz', 'Python'],
-    url='https://github.com/AnuragAnalog/nn_visualize',
+    url='https://github.com/AnuragAnalog/neuralnet-visualize',
     download_url='https://pypi.org/project/neuralnet-visualize/',
     classifiers=[
         "Natural Language :: English",
